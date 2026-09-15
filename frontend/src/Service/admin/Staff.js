@@ -1,0 +1,44 @@
+import axios from "axios";
+import { API_url } from "../../Config/config";
+
+
+export const AddStaff = async (data) => {
+    const res = await axios.post(`${API_url}/staff/add`, data)
+    return res
+}
+
+
+export const ViewAllStaff = async (page, limit) => {
+    const res = await axios.get(
+        `${API_url}/staff/viewAll?page=${page}&limit=${limit}`
+    );
+    return res.data;
+};
+
+export const ViewStaffDropdown = async () => {
+    const res = await axios.get(`${API_url}/staff/viewAll`);
+    return res.data.data;
+};
+
+
+export const Delete = async (id) => {
+    const res = await axios.delete(`${API_url}/staff/delete/${id}`)
+    return res
+}
+
+
+export const Update = async (id,updateData) => {
+    const res = await axios.put(`${API_url}/staff/update/${id}`,updateData)
+    return res
+}
+
+export const ViewStaff = async (id) => {
+  const res = await axios.get(`${API_url}/staff/view/${id}`);
+  return res.data.data;
+}
+
+
+export const StatusUpdate = async (id,updateData) => {
+    const res = await axios.put(`${API_url}/staff/statusUpdate/${id}`,updateData)
+    return res
+}
