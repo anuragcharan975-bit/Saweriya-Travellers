@@ -18,7 +18,6 @@ export default function FaqList() {
   const fetchData = async () => {
     try {
       const res = await ViewAllFaq(page, limit);
-      await new Promise(resolve => setTimeout(resolve));
       setDataList(res.data);
       setTotalPages(res.totalPages);
     } catch (error) {

@@ -18,7 +18,6 @@ export default function OfferList() {
   const fetchData = async () => {
     try {
       const res = await ViewAllOffer(page, limit);
-      await new Promise(resolve => setTimeout(resolve));
       setDataList(res.data);
       setTotalPages(res.totalPages);
     } catch (error) {

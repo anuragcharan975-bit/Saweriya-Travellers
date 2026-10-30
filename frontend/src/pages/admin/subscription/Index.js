@@ -18,7 +18,6 @@ export default function UserList() {
   const fetchData = async () => {
     try {
       const res = await ViewAllSubscription(page, limit);
-      await new Promise(resolve => setTimeout(resolve, 1000));
       setDataList(res.data);
       setTotalPages(res.totalPages);
     } catch (error) {

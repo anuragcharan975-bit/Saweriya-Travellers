@@ -304,62 +304,7 @@ export default function Home() {
       </section>
 
 
-      {/* ========== DOWNLOAD APP ========== */}
-      <section className="py-24 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 items-center gap-12">
-          <div className="animate-on-scroll">
-            <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-semibold mb-4 backdrop-blur-sm border border-white/20">
-              Mobile App
-            </span>
-            <h2 className="text-5xl lg:text-6xl font-bold text-white">
-              Download Our <br />
-              <span className="text-orange-400">Mobile App</span>
-            </h2>
-            <p className="mt-6 text-gray-300 text-lg leading-relaxed">
-              Book tickets faster, track your bus live, and receive instant
-              notifications on your phone.
-            </p>
-            <div className="flex flex-wrap gap-4 mt-8">
-              <button className="group bg-white text-blue-900 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl">
-                <PlayCircle size={28} />
-                <div className="text-left">
-                  <p className="text-xs">GET IT ON</p>
-                  <p className="font-bold">Google Play</p>
-                </div>
-              </button>
-              <button className="group bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-orange-500/30">
-                <PlayCircle size={28} />
-                <div className="text-left">
-                  <p className="text-xs">Download on</p>
-                  <p className="font-bold">App Store</p>
-                </div>
-              </button>
-            </div>
-            <div className="flex items-center gap-6 mt-6 text-gray-300">
-              <div className="flex items-center gap-1">
-                <CheckCircle className="text-green-400" size={16} />
-                <span className="text-sm">4.9 Rating</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="text-blue-400" size={16} />
-                <span className="text-sm">1M+ Downloads</span>
-              </div>
-            </div>
-          </div>
-          <div className="relative animate-on-scroll">
-            <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 to-transparent rounded-3xl blur-2xl"></div>
-            <img
-              src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=700"
-              alt="Mobile App"
-              className="rounded-3xl shadow-2xl w-full hover:scale-105 transition-transform duration-700 relative z-10"
-            />
-          </div>
-        </div>
-      </section>
+   
 
       {/* ========== FAQ ========== */}
       <Faq />

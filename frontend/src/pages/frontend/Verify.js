@@ -49,7 +49,10 @@ export default function VerifyOtp() {
                 otp,
             });
 
-            Swal.fire("Success", res.data.message, "success");
+            const msg = res.data?.otp 
+                ? `${res.data.message} (Your OTP: ${res.data.otp})` 
+                : (res.data?.message || "OTP resent successfully");
+            Swal.fire("Success", msg, "success");
 
             navigate("/reset-password", {
                 state: { email },
@@ -73,7 +76,10 @@ export default function VerifyOtp() {
                 email,
             });
 
-            Swal.fire("Success", res.data.message, "success");
+            const msg = res.data?.otp 
+                ? `${res.data.message} (Your OTP: ${res.data.otp})` 
+                : (res.data?.message || "OTP resent successfully");
+            Swal.fire("Success", msg, "success");
 
             setOtp("");
             setSeconds(30);

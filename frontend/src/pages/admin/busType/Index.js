@@ -18,7 +18,6 @@ export default function BusTypeList() {
   const fetchData = async () => {
     try {
       const res = await ViewAllBusType(page, limit);
-      await new Promise(resolve => setTimeout(resolve, 1000));
       setDataList(res.data);
       setTotalPages(res.totalPages);
     } catch (error) {

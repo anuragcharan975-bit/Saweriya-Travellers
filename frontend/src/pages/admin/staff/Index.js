@@ -19,7 +19,6 @@ export default function StaffList() {
   const fetchData = async () => {
     try {
       const res = await ViewAllStaff(page, limit);
-      await new Promise(resolve => setTimeout(resolve, 1000));
       setDataList(res.data);
       setTotalPages(res.totalPages);
     } catch (error) {
@@ -123,8 +122,8 @@ export default function StaffList() {
 
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr className="text-sm text-slate-500 font-semibold">
+                  <th className="px-6 py-4">Staff Member</th>
                   <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Created</th>
                   <th className="px-6 py-4">Staff Details</th>
@@ -138,17 +137,33 @@ export default function StaffList() {
                   dataList.map((staff) => (
                     <tr key={staff._id} className="hover:bg-slate-50">
 
-                      <td className="px-6 py-4 font-semibold">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {staff.photo ? (
+                            <img
+                              src={`${Image_url}/${staff.photo}`}
+                              alt={staff.full_name}
+                              className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm">
+                              {staff.full_name ? staff.full_name.charAt(0).toUpperCase() : "S"}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-slate-800">{staff.full_name || "Staff"}</p>
+                            <p className="text-xs text-slate-500">{staff.email}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 font-medium text-slate-700">
                         {
                           staff.role_id === 2
                             ? "Driver"
                             : staff.role_id === 3
                               ? "Conductor"
                               : "-"}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {staff.email}
                       </td>
 
                       <td className="px-6 py-4">

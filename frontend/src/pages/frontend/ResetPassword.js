@@ -29,8 +29,7 @@ export default function ResetPassword() {
 
             newPassword: Yup.string()
                 .required("New Password is required")
-                .min(6, "Password must be exactly 6 characters")
-                .max(6, "Password must be exactly 6 characters"),
+                .min(6, "Password must be at least 6 characters"),
 
             confirmPassword: Yup.string()
                 .oneOf(

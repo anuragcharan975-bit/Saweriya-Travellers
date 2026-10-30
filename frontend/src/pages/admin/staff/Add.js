@@ -23,10 +23,17 @@ const validationSchema = Yup.object({
     .required("Email is required"),
 
   password: Yup.string()
+    .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
 
   mobile_number: Yup.number()
-    .required("Mobile Number is required"),
+    .typeError("Mobile number must be numeric")
+    .required("Mobile Number is required")
+    .test(
+      "len",
+      "Mobile number must be exactly 10 digits",
+      (value) => value && value.toString().length === 10
+    ),
 
   date_of_birth: Yup.date()
     .required("Date of Birth is required"),
@@ -60,8 +67,9 @@ const validationSchema = Yup.object({
 
 export default function Add() {
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [dataList, setDataList] = useState([]);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -117,6 +125,7 @@ export default function Add() {
           confirmButtonText: "OK",
         });
 
+        setPhotoPreview(null);
         resetForm();
         navigate("/admin/staff");
       }
@@ -443,17 +452,46 @@ export default function Add() {
                   {/* Photo */}
                   <div>
                     <label className="block text-sm font-semibold mb-2">
-                      Photo
+                      Staff Photo
                     </label>
 
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) =>
-                        setFieldValue("photo", e.currentTarget.files[0])
-                      }
-                      className="w-full h-12 px-4 py-2 rounded-xl border"
+                      onChange={(e) => {
+                        const file = e.currentTarget.files[0];
+                        setFieldValue("photo", file);
+                        if (file) {
+                          setPhotoPreview(URL.createObjectURL(file));
+                        } else {
+                          setPhotoPreview(null);
+                        }
+                      }}
+                      className="w-full h-12 px-4 py-2 rounded-xl border border-slate-300 focus:border-violet-600 outline-none"
                     />
+
+                    {photoPreview && (
+                      <div className="mt-3 flex items-center gap-3">
+                        <img
+                          src={photoPreview}
+                          alt="Staff Preview"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-violet-500 shadow-md"
+                        />
+                        <div>
+                          <p className="text-xs text-slate-500">Selected photo preview</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFieldValue("photo", null);
+                              setPhotoPreview(null);
+                            }}
+                            className="text-xs text-red-500 hover:underline font-medium"
+                          >
+                            Remove Photo
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <ErrorMessage name="photo" component="p" className="text-red-500 text-sm mt-1" />
                   </div>

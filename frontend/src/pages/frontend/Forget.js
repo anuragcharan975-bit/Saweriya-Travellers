@@ -31,10 +31,14 @@ export default function ForgotPassword() {
 
                 const res = await ForgotPasswordApi(values);
 
-                Swal.fire({
+                const msg = res.data?.otp 
+                    ? `${res.data.message} (Your OTP: ${res.data.otp})` 
+                    : (res.data?.message || "OTP sent successfully");
+
+                await Swal.fire({
                     icon: "success",
-                    title: "Success",
-                    text: res.data.message,
+                    title: "OTP Generated",
+                    text: msg,
                 });
 
                 localStorage.setItem("resetEmail", values.email);

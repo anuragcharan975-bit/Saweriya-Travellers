@@ -35,19 +35,9 @@ export const RegisterApi = async (data) => {
 // =====================================================
 
 export const GetProfile = async () => {
-
-    const token =
-        localStorage.getItem("usertoken");
-
-    return await axios.get(
-        `${API_url}/frontend/auth/profile`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
+    const token = localStorage.getItem("usertoken") || localStorage.getItem("token") || "";
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return await axios.get(`${API_url}/frontend/auth/profile`, { headers });
 };
 
 
@@ -56,20 +46,9 @@ export const GetProfile = async () => {
 // =====================================================
 
 export const UpdateProfile = async (data) => {
-
-    const token =
-        localStorage.getItem("usertoken");
-
-    return await axios.put(
-        `${API_url}/frontend/auth/profile`,
-        data,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
+    const token = localStorage.getItem("usertoken") || localStorage.getItem("token") || "";
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return await axios.put(`${API_url}/frontend/auth/profile`, data, { headers });
 };
 
 
@@ -78,20 +57,9 @@ export const UpdateProfile = async (data) => {
 // =====================================================
 
 export const ChangePassword = async (data) => {
-
-    const token =
-        localStorage.getItem("usertoken");
-
-    return await axios.put(
-        `${API_url}/frontend/auth/passwordChange`,
-        data,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
+    const token = localStorage.getItem("usertoken") || localStorage.getItem("token") || "";
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return await axios.put(`${API_url}/frontend/auth/passwordChange`, data, { headers });
 };
 
 

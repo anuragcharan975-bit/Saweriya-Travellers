@@ -28,7 +28,7 @@ export default function Login() {
 
 
       password: Yup.string()
-        .min(6, "Minimum 6 characters")
+        .min(6, "Password must be at least 6 characters")
         .required("Password is required"),
     }),
 

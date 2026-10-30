@@ -1,3 +1,4 @@
+import { Image_url } from "../../../Config/config";
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -23,10 +24,17 @@ const validationSchema = Yup.object({
         .required("Email is required"),
 
     password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
         .required("Password is required"),
 
     mobile_number: Yup.number()
-        .required("Mobile Number is required"),
+        .typeError("Mobile number must be numeric")
+        .required("Mobile Number is required")
+        .test(
+            "len",
+            "Mobile number must be exactly 10 digits",
+            (value) => value && value.toString().length === 10
+        ),
 
     date_of_birth: Yup.date()
         .required("Date of Birth is required"),
@@ -78,6 +86,8 @@ export default function Edit() {
     const { id } = useParams()
     const navigate = useNavigate();
 
+    const [currentPhoto, setCurrentPhoto] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(null);
     const [initialValues, setInitialValues] = useState({
         role_id: "",
         full_name: "",
@@ -124,6 +134,9 @@ export default function Edit() {
                     salary: res.salary || "",
                     bus: res.bus?._id || "",
                 });
+                if (res.photo) {
+                    setCurrentPhoto(res.photo);
+                }
             } catch (error) {
                 console.log(error);
             }
@@ -143,7 +156,7 @@ export default function Edit() {
                         formData.append("bus", values.bus);
                     }
                 } else if (key === "photo") {
-                    if (values.photo) {
+                    if (values.photo && typeof values.photo !== "string") {
                         formData.append("photo", values.photo);
                     }
                 } else {
@@ -471,17 +484,43 @@ export default function Edit() {
                             {/* Photo */}
                             <div>
                                 <label className="block text-sm font-semibold mb-2">
-                                    Photo
+                                    Staff Photo
                                 </label>
 
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) =>
-                                        setFieldValue("photo", e.currentTarget.files[0])
-                                    }
-                                    className="w-full h-12 px-4 py-2 rounded-xl border"
+                                    onChange={(e) => {
+                                        const file = e.currentTarget.files[0];
+                                        setFieldValue("photo", file);
+                                        if (file) {
+                                            setPhotoPreview(URL.createObjectURL(file));
+                                        } else {
+                                            setPhotoPreview(null);
+                                        }
+                                    }}
+                                    className="w-full h-12 px-4 py-2 rounded-xl border border-slate-300 focus:border-violet-600 outline-none"
                                 />
+
+                                {photoPreview ? (
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <img
+                                            src={photoPreview}
+                                            alt="Staff Preview"
+                                            className="w-16 h-16 rounded-full object-cover border-2 border-violet-500 shadow-md"
+                                        />
+                                        <p className="text-xs text-slate-500">New photo selected</p>
+                                    </div>
+                                ) : currentPhoto ? (
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <img
+                                            src={`${Image_url}/${currentPhoto}`}
+                                            alt="Current Staff"
+                                            className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 shadow-sm"
+                                        />
+                                        <p className="text-xs text-slate-500">Current photo</p>
+                                    </div>
+                                ) : null}
 
                                 <ErrorMessage name="photo" component="p" className="text-red-500 text-sm mt-1" />
                             </div>

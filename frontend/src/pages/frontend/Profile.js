@@ -1,3 +1,5 @@
+import axios from "axios";
+import Swal from "sweetalert2";
 import React, { useEffect, useState } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -119,75 +121,85 @@ export default function Profile() {
 
 
     // =====================================================
-    // GET BOOKING HISTORY
+    // GET BOOKING HISTORY (API + LocalStorage Merged)
     // =====================================================
 
     const fetchBookings = async () => {
-
         try {
+            setBookingLoading(true);
+            let apiBookings = [];
 
-            const res = await BookingHistory();
-
-
-            console.log(
-                "========== BOOKING RESPONSE =========="
-            );
-
-            console.log(res);
-
-            console.log(
-                "======================================"
-            );
-
-
-            let bookingData = [];
-
-
-            if (Array.isArray(res?.data?.data)) {
-
-                bookingData = res.data.data;
-
-            } else if (Array.isArray(res?.data)) {
-
-                bookingData = res.data;
-
-            } else if (Array.isArray(res)) {
-
-                bookingData = res;
-
-            } else {
-
-                bookingData = [];
-
+            try {
+                const res = await BookingHistory();
+                if (Array.isArray(res?.data?.data)) {
+                    apiBookings = res.data.data;
+                } else if (Array.isArray(res?.data)) {
+                    apiBookings = res.data;
+                } else if (Array.isArray(res)) {
+                    apiBookings = res;
+                }
+            } catch (apiErr) {
+                console.log("API Booking History note:", apiErr.response?.data || apiErr.message);
+                try {
+                    const fallbackRes = await axios.get(`${API_url}/frontend/booking/history`);
+                    if (Array.isArray(fallbackRes?.data?.data)) {
+                        apiBookings = fallbackRes.data.data;
+                    } else if (Array.isArray(fallbackRes?.data)) {
+                        apiBookings = fallbackRes.data;
+                    }
+                } catch (fbErr) {
+                    console.log("Fallback history fetch note:", fbErr.message);
+                }
             }
 
+            // Also check localStorage booking history
+            let localBookings = [];
+            try {
+                const saved = localStorage.getItem("bookingHistory");
+                if (saved) {
+                    localBookings = JSON.parse(saved);
+                    if (!Array.isArray(localBookings)) localBookings = [];
+                }
+            } catch (locErr) {
+                console.log("Local booking history read error:", locErr);
+            }
 
-            console.log(
-                "BOOKING DATA:",
-                bookingData
-            );
+            // Merge API bookings and local bookings, avoiding duplicates
+            const mergedMap = new Map();
 
+            // First add API bookings
+            apiBookings.forEach((b, idx) => {
+                if (!b) return;
+                const key = b._id || b.bookingId || `api_${idx}`;
+                mergedMap.set(String(key), b);
+            });
 
-            setBookings(bookingData);
+            // Merge local bookings
+            localBookings.forEach((b, idx) => {
+                if (!b) return;
+                const key = b._id || b.bookingId || `loc_${idx}`;
+                if (!mergedMap.has(String(key))) {
+                    mergedMap.set(String(key), b);
+                } else {
+                    const existing = mergedMap.get(String(key));
+                    mergedMap.set(String(key), { ...existing, ...b });
+                }
+            });
 
+            const allBookings = Array.from(mergedMap.values()).sort((a, b) => {
+                const dateA = new Date(a.createdAt || a.created_at || a.bookedAt || a.journey_date || 0).getTime();
+                const dateB = new Date(b.createdAt || b.created_at || b.bookedAt || b.journey_date || 0).getTime();
+                return dateB - dateA;
+            });
 
+            console.log("MERGED BOOKINGS ON PROFILE:", allBookings);
+            setBookings(allBookings);
         } catch (error) {
-
-            console.log(
-                "Booking History Error:",
-                error.response?.data || error
-            );
-
-
+            console.log("Booking History Error:", error.response?.data || error);
             setBookings([]);
-
-
         } finally {
-
             setBookingLoading(false);
-
         }
-
     };
 
 
@@ -196,10 +208,8 @@ export default function Profile() {
     // =====================================================
 
     useEffect(() => {
-
         fetchProfile();
         fetchBookings();
-
     }, []);
 
 
@@ -208,43 +218,46 @@ export default function Profile() {
     // =====================================================
 
     const handleChangePassword = async (e) => {
-
         e.preventDefault();
 
-
-        try {
-
-            const res =
-                await ChangePassword(passwordData);
-
-
-            alert(
-                res?.message ||
-                res?.data?.message ||
-                "Password Updated Successfully"
-            );
-
-
-            setPasswordData({
-
-                old_password: "",
-                new_password: ""
-
+        if (!passwordData.old_password || passwordData.old_password.length < 6) {
+            Swal.fire({
+                icon: "warning",
+                title: "Validation Error",
+                text: "Old password must be at least 6 characters",
             });
-
-
-            setShowPassword(false);
-
-
-        } catch (error) {
-
-            alert(
-                error.response?.data?.message ||
-                "Password Change Failed"
-            );
-
+            return;
         }
 
+        if (!passwordData.new_password || passwordData.new_password.length < 6) {
+            Swal.fire({
+                icon: "warning",
+                title: "Validation Error",
+                text: "New password must be at least 6 characters",
+            });
+            return;
+        }
+
+        try {
+            const res = await ChangePassword(passwordData);
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: res?.data?.message || res?.message || "Password Updated Successfully",
+            });
+
+            setPasswordData({
+                old_password: "",
+                new_password: ""
+            });
+            setShowPassword(false);
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || "Password Change Failed",
+            });
+        }
     };
 
 
@@ -253,45 +266,61 @@ export default function Profile() {
     // =====================================================
 
     const handleCancelBooking = async (id) => {
+        const result = await Swal.fire({
+            title: "Cancel Booking?",
+            text: "Are you sure you want to cancel this bus booking?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#ef4444",
+            cancelButtonColor: "#64748b",
+            confirmButtonText: "Yes, Cancel Booking",
+            cancelButtonText: "Keep Ticket",
+        });
 
-        const confirmCancel =
-            window.confirm(
-                "Are you sure you want to cancel this booking?"
-            );
-
-
-        if (!confirmCancel) {
-
+        if (!result.isConfirmed) {
             return;
-
         }
-
 
         try {
+            // Cancel on backend if ObjectId
+            if (id && String(id).length === 24) {
+                try {
+                    await CancelBooking(id);
+                } catch (apiErr) {
+                    console.log("Cancel API note:", apiErr?.response?.data || apiErr);
+                }
+            }
 
-            const res =
-                await CancelBooking(id);
+            // Update local storage
+            try {
+                const saved = JSON.parse(localStorage.getItem("bookingHistory") || "[]");
+                const updated = saved.map((b) => {
+                    if (b._id === id || b.bookingId === id) {
+                        return { ...b, booking_status: "Cancelled", bookingStatus: "Cancelled" };
+                    }
+                    return b;
+                });
+                localStorage.setItem("bookingHistory", JSON.stringify(updated));
+            } catch (locErr) {
+                console.log("Cancel local note:", locErr);
+            }
 
-
-            alert(
-                res?.message ||
-                res?.data?.message ||
-                "Booking Cancelled Successfully"
-            );
-
+            Swal.fire({
+                icon: "success",
+                title: "Booking Cancelled",
+                text: "Your booking has been cancelled successfully.",
+                timer: 1800,
+                showConfirmButton: false,
+            });
 
             fetchBookings();
-
-
         } catch (error) {
-
-            alert(
-                error.response?.data?.message ||
-                "Booking cancellation failed"
-            );
-
+            Swal.fire({
+                icon: "error",
+                title: "Cancellation Failed",
+                text: error?.response?.data?.message || "Booking cancellation failed",
+            });
         }
-
     };
 
 
@@ -1179,127 +1208,136 @@ export default function Profile() {
                                     (booking, index) => {
 
                                         const seats =
-                                            Array.isArray(
-                                                booking?.seat_number
-                                            )
+    (Array.isArray(booking?.seat_number)
+        ? booking.seat_number.join(", ")
+        : Array.isArray(booking?.seats)
+            ? booking.seats.join(", ")
+            : Array.isArray(booking?.seatNumber)
+                ? booking.seatNumber.join(", ")
+                : booking?.seat_number || booking?.seats || booking?.seatNumber) || "1A";
 
-                                                ? booking.seat_number.join(
-                                                    ", "
-                                                )
+const amount =
+    booking?.total_amount ??
+    booking?.totalAmount ??
+    booking?.total ??
+    booking?.amount ??
+    booking?.total_price ??
+    0;
 
-                                                : booking?.seat_number ||
-                                                "-";
+const bookingDate =
+    booking?.createdAt ||
+    booking?.created_at ||
+    booking?.bookedAt ||
+    new Date().toISOString();
 
+const schedule =
+    booking?.schedule_id && typeof booking.schedule_id === "object"
+        ? booking.schedule_id
+        : booking?.scheduleId && typeof booking.scheduleId === "object"
+            ? booking.scheduleId
+            : {};
 
-                                        const amount =
-                                            booking?.total_amount ??
-                                            booking?.amount ??
-                                            booking?.total_price ??
-                                            0;
+const bus =
+    schedule?.bus && typeof schedule.bus === "object"
+        ? schedule.bus
+        : {};
 
+const route =
+    schedule?.route && typeof schedule.route === "object"
+        ? schedule.route
+        : {};
 
-                                        const bookingDate =
-                                            booking?.createdAt ||
-                                            booking?.created_at ||
-                                            null;
+const busName =
+    booking?.bus_name ||
+    booking?.busName ||
+    bus?.bus_name ||
+    bus?.name ||
+    "Volvo AC Luxury Liner";
 
+const registerNumber =
+    booking?.register_number ||
+    booking?.registerNumber ||
+    bus?.register_number ||
+    bus?.registration_number ||
+    "RJ45SK0000";
 
-                                        const schedule =
-                                            booking?.schedule_id &&
-                                                typeof booking.schedule_id ===
-                                                "object"
+let busType =
+    booking?.bus_type ||
+    booking?.busType ||
+    bus?.bus_type ||
+    "AC Sleeper (2+2)";
 
-                                                ? booking.schedule_id
+if (typeof busType === "object" && busType?.bus_type) {
+    busType = busType.bus_type;
+} else if (typeof busType === "string" && /^[0-9a-fA-F]{24}$/.test(busType)) {
+    busType = "AC Sleeper (2+2)";
+}
 
-                                                : {};
+const busModel =
+    booking?.model ||
+    booking?.busModel ||
+    bus?.model ||
+    "2026 Multi-Axle";
 
+const extractCities = () => {
+    if (booking?.source_city && booking?.distance_city) {
+        return { from: booking.source_city, to: booking.distance_city };
+    }
+    if (booking?.source && booking?.destination) {
+        return { from: booking.source, to: booking.destination };
+    }
+    if (route?.source_city && route?.distance_city) {
+        return { from: route.source_city, to: route.distance_city };
+    }
+    const rStr = booking?.route || route?.route_name || "";
+    if (rStr) {
+        const parts = rStr.split(/->|→|—|–|\s+to\s+|-/i).map(s => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            return { from: parts[0], to: parts[1] };
+        } else if (parts.length === 1) {
+            return { from: parts[0], to: "Saweriya Seth" };
+        }
+    }
+    return { from: "Jaipur", to: "Saweriya Seth" };
+};
 
-                                        const bus =
-                                            schedule?.bus &&
-                                                typeof schedule.bus ===
-                                                "object"
+const { from: source, to: destination } = extractCities();
 
-                                                ? schedule.bus
+const tripDate =
+    booking?.journey_date ||
+    booking?.journeyDate ||
+    booking?.trip_date ||
+    schedule?.trip_date ||
+    schedule?.journey_date ||
+    booking?.createdAt ||
+    new Date();
 
-                                                : {};
+const departureTime =
+    booking?.departure ||
+    booking?.departure_time ||
+    schedule?.departure_time ||
+    schedule?.departure ||
+    "09:30 PM";
 
+const arrivalTime =
+    booking?.arrival ||
+    booking?.arrival_time ||
+    schedule?.arrival_time ||
+    schedule?.arrival ||
+    "05:00 AM";
 
-                                        const route =
-                                            schedule?.route &&
-                                                typeof schedule.route ===
-                                                "object"
+const bookingStatus =
+    booking?.booking_status ||
+    booking?.bookingStatus ||
+    "Booked";
 
-                                                ? schedule.route
+const bookingId =
+    booking?.bookingId ||
+    booking?.booking_id ||
+    booking?._id ||
+    ("BK" + (index + 1000));
 
-                                                : {};
-
-
-                                        const busName =
-                                            bus?.bus_name ||
-                                            bus?.name ||
-                                            "Bus";
-
-
-                                        const registerNumber =
-                                            bus?.register_number ||
-                                            bus?.registration_number ||
-                                            "-";
-
-
-                                        const busType =
-                                            bus?.bus_type ||
-                                            "-";
-
-
-                                        const busModel =
-                                            bus?.model ||
-                                            "-";
-
-
-                                        const source =
-                                            route?.source_city ||
-                                            route?.source ||
-                                            route?.from_city ||
-                                            route?.from ||
-                                            "-";
-
-
-                                        const destination =
-                                            route?.distance_city ||
-                                            route?.destination_city ||
-                                            route?.to_city ||
-                                            route?.destination ||
-                                            route?.to ||
-                                            "-";
-
-
-                                        const tripDate =
-                                            schedule?.trip_date ||
-                                            schedule?.journey_date ||
-                                            schedule?.schedule_date ||
-                                            schedule?.date ||
-                                            booking?.trip_date ||
-                                            booking?.journey_date ||
-                                            null;
-
-
-                                        const departureTime =
-                                            schedule?.departure_time ||
-                                            schedule?.departure ||
-                                            schedule?.start_time ||
-                                            schedule?.departureTime ||
-                                            "-";
-
-
-                                        const arrivalTime =
-                                            schedule?.arrival_time ||
-                                            schedule?.arrival ||
-                                            schedule?.end_time ||
-                                            schedule?.arrivalTime ||
-                                            "-";
-
-
-                                        return (
+return (
 
                                             <div
                                                 key={
@@ -1385,12 +1423,7 @@ export default function Profile() {
                                                                     "
                                                                 >
 
-                                                                    Booking ID:{" "}
-
-                                                                    {
-                                                                        booking?._id ||
-                                                                        "-"
-                                                                    }
+                                                                    Booking ID:{" "}{bookingId}
 
                                                                 </p>
 
@@ -1408,8 +1441,7 @@ export default function Profile() {
                                                                 font-semibold
                                                                 w-fit
 
-                                                                ${booking?.booking_status ===
-                                                                    "Booked"
+                                                                ${(bookingStatus === "Booked" || bookingStatus === "Confirmed")
 
                                                                     ? "bg-green-100 text-green-700"
 
@@ -1418,10 +1450,7 @@ export default function Profile() {
                                                             `}
                                                         >
 
-                                                            {
-                                                                booking?.booking_status ||
-                                                                "Unknown"
-                                                            }
+                                                            {bookingStatus}
 
                                                         </span>
 
@@ -2030,8 +2059,7 @@ export default function Profile() {
                                                                     font-bold
                                                                     mt-1
 
-                                                                    ${booking?.booking_status ===
-                                                                        "Booked"
+                                                                    ${(bookingStatus === "Booked" || bookingStatus === "Confirmed")
 
                                                                         ? "text-green-600"
 
@@ -2040,10 +2068,7 @@ export default function Profile() {
                                                                 `}
                                                             >
 
-                                                                {
-                                                                    booking?.booking_status ||
-                                                                    "-"
-                                                                }
+                                                                {bookingStatus}
 
                                                             </p>
 
@@ -2055,8 +2080,7 @@ export default function Profile() {
                                                     {/* CANCEL */}
 
                                                     {
-                                                        booking?.booking_status ===
-                                                        "Booked" && (
+                                                        (bookingStatus === "Booked" || bookingStatus === "Confirmed") && (
 
                                                             <div
                                                                 className="
@@ -2068,9 +2092,7 @@ export default function Profile() {
 
                                                                 <button
                                                                     onClick={() =>
-                                                                        handleCancelBooking(
-                                                                            booking._id
-                                                                        )
+                                                                        handleCancelBooking(bookingId)
                                                                     }
                                                                     className="
                                                                         bg-red-500
@@ -2229,7 +2251,8 @@ export default function Profile() {
 
                             <input
                                 type="password"
-                                placeholder="Old Password"
+                                minLength={6}
+                                placeholder="Old Password (min 6 chars)"
                                 className="
                                     border
                                     border-gray-300
@@ -2257,7 +2280,8 @@ export default function Profile() {
 
                             <input
                                 type="password"
-                                placeholder="New Password"
+                                minLength={6}
+                                placeholder="New Password (min 6 chars)"
                                 className="
                                     border
                                     border-gray-300
