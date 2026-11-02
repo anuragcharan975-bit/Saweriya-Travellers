@@ -26,14 +26,9 @@ const validationSchema = Yup.object({
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
 
-  mobile_number: Yup.number()
-    .typeError("Mobile number must be numeric")
+  mobile_number: Yup.string()
     .required("Mobile Number is required")
-    .test(
-      "len",
-      "Mobile number must be exactly 10 digits",
-      (value) => value && value.toString().length === 10
-    ),
+    .matches(/^[0-9]{10}$/, "Mobile number must be exactly 10 digits"),
 
   date_of_birth: Yup.date()
     .required("Date of Birth is required"),
@@ -271,7 +266,8 @@ export default function Add() {
 
                     <Field
                       name="mobile_number"
-                      placeholder="Enter Mobile Number"
+                      maxLength={10}
+                      placeholder="Enter 10-digit Mobile Number"
                       className="w-full h-12 px-4 rounded-xl border"
                     />
 

@@ -14,11 +14,11 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-6 text-center">
 
           <h1 className="text-5xl font-bold text-white">
-            About <span className="text-orange-500">DriveBus</span>
+            About <span className="text-orange-500">Saweriya Travellers</span>
           </h1>
 
           <p className="mt-6 text-gray-300 text-lg max-w-3xl mx-auto">
-            DriveBus is a trusted online bus booking platform that connects
+            Saweriya Travellers is a trusted online bus booking platform that connects
             passengers with comfortable and affordable bus services across India.
             Book buses easily, check routes, track availability and enjoy a
             smooth travel experience.
@@ -41,7 +41,7 @@ export default function About() {
               </h2>
 
               <p className="mt-5 text-gray-600 leading-relaxed">
-                At DriveBus, our mission is to make bus booking fast and
+                At Saweriya Travellers, our mission is to make bus booking fast and
                 convenient. Users can search buses, compare prices, choose
                 seats and book tickets online from anywhere.
               </p>

@@ -224,9 +224,16 @@ export default function EditProfile() {
     // =====================================================
 
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
+        if (formData.mobile_no && !/^[0-9]{10}$/.test(String(formData.mobile_no).trim())) {
+            Swal.fire({
+                icon: "warning",
+                title: "Invalid Mobile Number",
+                text: "Mobile number must be exactly 10 digits",
+            });
+            return;
+        }
 
         try {
 
@@ -445,7 +452,7 @@ export default function EditProfile() {
                             >
                                 Keep your personal information updated to
                                 enjoy a seamless booking experience with
-                                DriveBus.
+                                Saweriya Travellers.
                             </p>
 
 
@@ -761,30 +768,18 @@ export default function EditProfile() {
 
 
                                     <input
-                                        type="text"
-                                        value={
-                                            formData.mobile_no
-                                        }
-                                        onChange={(e) =>
+                                        type="tel"
+                                        maxLength={10}
+                                        value={formData.mobile_no}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                                             setFormData({
-
                                                 ...formData,
-
-                                                mobile_no:
-                                                    e.target.value
-
-                                            })
-                                        }
-                                        className="
-                                            w-full
-                                            border
-                                            rounded-xl
-                                            p-3
-                                            focus:outline-none
-                                            focus:ring-2
-                                            focus:ring-violet-500
-                                        "
-                                        placeholder="Enter mobile number"
+                                                mobile_no: val
+                                            });
+                                        }}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                        placeholder="Enter 10-digit mobile number"
                                     />
 
                                 </div>

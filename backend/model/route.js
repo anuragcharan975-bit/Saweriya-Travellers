@@ -13,7 +13,7 @@ const routeSchema = new mongoose.Schema({
     
     status: {
         type: Boolean,
-        default: "false"
+        default: true
     }
 }, {
     timestamps: true

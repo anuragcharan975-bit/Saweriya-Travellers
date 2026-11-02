@@ -184,7 +184,7 @@ export default function BusList() {
     const file = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
     });
-    saveAs(file, "DriveBus_Fleet.xlsx");
+    saveAs(file, "Saweriya_Travellers_Fleet.xlsx");
   };
 
   return (

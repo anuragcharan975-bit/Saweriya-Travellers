@@ -61,7 +61,7 @@ export default function Ticket() {
                 Browse Buses
               </button>
               <button
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate("/my-bookings")}
                 className="px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition"
               >
                 My Bookings
@@ -252,7 +252,7 @@ export default function Ticket() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold tracking-widest uppercase text-orange-400">
-                      DriveBus Boarding Pass
+                      Saweriya Travellers Boarding Pass
                     </span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                       Verified
@@ -447,11 +447,11 @@ export default function Ticket() {
           </button>
 
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/my-bookings")}
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm shadow-md shadow-violet-500/25 transition-all active:scale-98 flex items-center justify-center gap-2"
           >
             <TicketIcon size={18} />
-            <span>View in Profile</span>
+            <span>My Bookings History</span>
           </button>
 
           <button

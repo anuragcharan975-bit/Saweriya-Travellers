@@ -1,5 +1,5 @@
 import React from "react";
-import DriveBusLogo from "../../assets/adminlogo.png";
+import SaweriyaLogo from "../../assets/adminlogo.png";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import "animate.css";
@@ -72,17 +72,20 @@ Swal.fire({
       <div className="card">
 
         {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white-500 shadow-lg bg-white flex items-center justify-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-100 shadow-xl bg-slate-900 flex items-center justify-center p-1">
             <img
-              src={DriveBusLogo}
-              alt="DriveBus Logo"
-              className="w-full h-full object-cover"
+              src={SaweriyaLogo}
+              alt="Saweriya Travellers Logo"
+              className="w-full h-full object-contain"
             />
           </div>
         </div>
 
-        <h2>Admin Login</h2>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Admin Login</h2>
+          <p className="text-xs text-indigo-600 font-bold uppercase tracking-wider mt-1">Saweriya Travellers Console</p>
+        </div>
         <form onSubmit={formik.handleSubmit}>
 
           <div className="input-group">
@@ -110,7 +113,8 @@ Swal.fire({
             <input
               type="password"
               name="password"
-              placeholder="Enter Password"
+              minLength={6}
+              placeholder="Enter Password (min 6 characters)"
               value={formik.values.password}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}

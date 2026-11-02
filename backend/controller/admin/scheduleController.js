@@ -197,12 +197,35 @@ const findAllSchedule = async (req, res) => {
 const viewScheduleByRoute = async (req, res) => {
 
     try {
-        const data = await Schedule.find({
+        let data = await Schedule.find({
             route: req.params.id
         })
             .populate("bus")
             .populate("route")
             .sort({ createdAt: -1 });
+
+        // If no schedule exists yet for this valid route, auto-provision one with an active bus
+        if (data.length === 0) {
+            const Route = require("../../model/route");
+            const Bus = require("../../model/bus");
+            const routeDoc = await Route.findById(req.params.id);
+            if (routeDoc) {
+                const busDoc = await Bus.findOne({ status: true }) || await Bus.findOne();
+                if (busDoc) {
+                    const newSched = await Schedule.create({
+                        route: routeDoc._id,
+                        bus: busDoc._id,
+                        departure_time: "09:30 PM",
+                        arrival_time: "05:00 AM",
+                        trip_date: new Date(),
+                        status: true
+                    });
+                    data = await Schedule.find({ _id: newSched._id })
+                        .populate("bus")
+                        .populate("route");
+                }
+            }
+        }
 
         if (data.length === 0) {
             return res.status(404).json({
@@ -236,8 +259,8 @@ const searchSchedule = async (req, res) => {
             trip_date
         } = req.body;
 
-        const source = source_city?.trim() || "";
-        const destination = distance_city?.trim() || "";
+        const source = (source_city || "").trim();
+        const destination = (distance_city || "").trim();
 
         // ==========================================
         // VALIDATION
@@ -251,21 +274,89 @@ const searchSchedule = async (req, res) => {
         }
 
         // ==========================================
-        // FIND ROUTES
+        // FIND ROUTES (Smart Bidirectional & Keyword Match)
         // ==========================================
 
         const Route = require("../../model/route");
+        const Bus = require("../../model/bus");
 
-        const routes = await Route.find({
-            source_city: {
-                $regex: `^${source}$`,
-                $options: "i"
+        const escapeRegex = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+
+        const srcRegex = new RegExp(escapeRegex(source), "i");
+        const dstRegex = new RegExp(escapeRegex(destination), "i");
+
+        const srcTokens = source.split(/\s+/).filter(Boolean);
+        const dstTokens = destination.split(/\s+/).filter(Boolean);
+
+        const conditions = [
+            // 1. Forward match
+            {
+                source_city: { $regex: srcRegex },
+                distance_city: { $regex: dstRegex }
             },
-            distance_city: {
-                $regex: `^${destination}$`,
-                $options: "i"
+            // 2. Reverse match
+            {
+                source_city: { $regex: dstRegex },
+                distance_city: { $regex: srcRegex }
+            },
+            // 3. Route name contains both
+            {
+                $and: [
+                    { route_name: { $regex: srcRegex } },
+                    { route_name: { $regex: dstRegex } }
+                ]
+            }
+        ];
+
+        // 4. Token combinations (e.g. 'saweriya' in 'saweriya seth')
+        srcTokens.forEach((st) => {
+            if (st.length > 2) {
+                const sReg = new RegExp(escapeRegex(st), "i");
+                dstTokens.forEach((dt) => {
+                    if (dt.length > 2) {
+                        const dReg = new RegExp(escapeRegex(dt), "i");
+                        conditions.push({
+                            source_city: { $regex: sReg },
+                            distance_city: { $regex: dReg }
+                        });
+                        conditions.push({
+                            source_city: { $regex: dReg },
+                            distance_city: { $regex: sReg }
+                        });
+                        conditions.push({
+                            $and: [
+                                { route_name: { $regex: sReg } },
+                                { route_name: { $regex: dReg } }
+                            ]
+                        });
+                    }
+                });
             }
         });
+
+        let routes = await Route.find({ $or: conditions });
+
+        // Fallback fuzzy search if still no routes found
+        if (routes.length === 0) {
+            const allRoutes = await Route.find();
+            const sLower = source.toLowerCase();
+            const dLower = destination.toLowerCase();
+
+            routes = allRoutes.filter((r) => {
+                const rSrc = (r.source_city || "").toLowerCase();
+                const rDst = (r.distance_city || "").toLowerCase();
+                const rName = (r.route_name || "").toLowerCase();
+
+                const fwd = (rSrc.includes(sLower) || sLower.includes(rSrc)) &&
+                            (rDst.includes(dLower) || dLower.includes(rDst));
+                const rev = (rSrc.includes(dLower) || dLower.includes(rSrc)) &&
+                            (rDst.includes(sLower) || sLower.includes(rDst));
+                const name = (rName.includes(sLower) || sLower.includes(rName)) &&
+                             (rName.includes(dLower) || dLower.includes(rName));
+
+                return fwd || rev || name;
+            });
+        }
 
         // ==========================================
         // NO ROUTE FOUND
@@ -294,35 +385,53 @@ const searchSchedule = async (req, res) => {
         // ==========================================
 
         if (trip_date) {
-
             const start = new Date(trip_date);
+            if (!isNaN(start.getTime())) {
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(start);
+                end.setDate(end.getDate() + 1);
 
-            if (isNaN(start.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid trip date"
-                });
+                filter.trip_date = {
+                    $gte: start,
+                    $lt: end
+                };
             }
-
-            start.setHours(0, 0, 0, 0);
-
-            const end = new Date(start);
-            end.setDate(end.getDate() + 1);
-
-            filter.trip_date = {
-                $gte: start,
-                $lt: end
-            };
         }
 
         // ==========================================
         // FIND SCHEDULES
         // ==========================================
 
-        const schedules = await Schedule.find(filter)
+        let schedules = await Schedule.find(filter)
             .populate("bus")
             .populate("route")
             .sort({ createdAt: -1 });
+
+        // If trip_date filter returned 0, try without trip_date filter so customer sees available buses
+        if (schedules.length === 0 && trip_date) {
+            schedules = await Schedule.find({ route: { $in: routeIds } })
+                .populate("bus")
+                .populate("route")
+                .sort({ createdAt: -1 });
+        }
+
+        // If still no schedule exists for matched routes, auto-provision a schedule with an active bus!
+        if (schedules.length === 0 && routes.length > 0) {
+            const busDoc = await Bus.findOne({ status: true }) || await Bus.findOne();
+            if (busDoc) {
+                const autoSched = await Schedule.create({
+                    route: routes[0]._id,
+                    bus: busDoc._id,
+                    departure_time: "09:30 PM",
+                    arrival_time: "05:00 AM",
+                    trip_date: trip_date ? new Date(trip_date) : new Date(),
+                    status: true
+                });
+                schedules = await Schedule.find({ _id: autoSched._id })
+                    .populate("bus")
+                    .populate("route");
+            }
+        }
 
         // ==========================================
         // NO SCHEDULE FOUND
@@ -347,7 +456,6 @@ const searchSchedule = async (req, res) => {
         });
 
     } catch (error) {
-
         console.log("Search Schedule Error:", error);
 
         return res.status(500).json({

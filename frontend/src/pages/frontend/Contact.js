@@ -23,14 +23,32 @@ export default function Contact() {
 
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "mobile_no") {
+      const cleanVal = value.replace(/\D/g, "").slice(0, 10);
+      setFormData({
+        ...formData,
+        mobile_no: cleanVal,
+      });
+      return;
+    }
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.mobile_no || !/^[0-9]{10}$/.test(String(formData.mobile_no).trim())) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Mobile number must be exactly 10 digits",
+      });
+      return;
+    }
 
     try {
       const res = await AddContact(formData);
@@ -161,10 +179,9 @@ export default function Contact() {
                   />
 
                   <input
-                    type="text"
+                    type="tel"
                     name="mobile_no"
-                    value={formData.mobile_no}
-                    onChange={handleChange}
+                    maxLength={10}
                     placeholder="Enter 10-digit mobile number"
                     className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />

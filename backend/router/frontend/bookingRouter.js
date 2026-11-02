@@ -1,66 +1,39 @@
 const express = require("express");
-
 const router = express.Router();
 
-
-const verifyToken =
-    require("../../middleware/verifyToken");
-
+const optionalToken = require("../../middleware/optionalToken");
 
 const {
-
     createBooking,
-
     bookingHistory,
-
-    cancelBooking
-
+    cancelBooking,
+    getBookedSeats
 } = require("../../controller/frontend/bookingController");
 
-
 // =====================================================
-// CREATE BOOKING
+// CREATE BOOKING (Support both /create and /add)
 // =====================================================
 
-router.post(
-
-    "/create",
-
-    verifyToken,
-
-    createBooking
-
-);
-
+router.post("/create", optionalToken, createBooking);
+router.post("/add", optionalToken, createBooking);
 
 // =====================================================
 // BOOKING HISTORY
 // =====================================================
 
-router.get(
+router.get("/history", optionalToken, bookingHistory);
 
-    "/history",
+// =====================================================
+// BOOKED SEATS (Auto-freed when trip finishes)
+// =====================================================
 
-    verifyToken,
-
-    bookingHistory
-
-);
-
+router.get("/booked-seats/:schedule_id", optionalToken, getBookedSeats);
+router.get("/booked-seats", optionalToken, getBookedSeats);
 
 // =====================================================
 // CANCEL BOOKING
 // =====================================================
 
-router.put(
-
-    "/cancel/:id",
-
-    verifyToken,
-
-    cancelBooking
-
-);
-
+router.put("/cancel/:id", optionalToken, cancelBooking);
 
 module.exports = router;

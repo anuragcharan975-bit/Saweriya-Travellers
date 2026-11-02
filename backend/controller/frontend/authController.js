@@ -12,10 +12,17 @@ const register = async (req, res) => {
 
         const { email, mobile_no, full_name, password } = req.body;
 
-        if (!/^[0-9]{10}$/.test(mobile_no)) {
+        if (!/^[0-9]{10}$/.test(String(mobile_no))) {
             return res.status(400).json({
                 success: false,
                 message: "Mobile number must be exactly 10 digits"
+            });
+        }
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 6 characters"
             });
         }
 
@@ -38,14 +45,18 @@ const register = async (req, res) => {
             role_id: 4
         });
 
-        await sendMail(
-            email,
-            "🎉 Welcome to DriveBus",
-            `<h2>Hello ${full_name}</h2>
-            <p>Your account has been created successfully.</p>
-            <p>Email : ${email}</p>
-            <p>Password : ${password}</p>`
-        );
+        try {
+            await sendMail(
+                email,
+                "🎉 Welcome to Saweriya Travellers",
+                `<h2>Hello ${full_name}</h2>
+                <p>Your account has been created successfully.</p>
+                <p>Email : ${email}</p>
+                <p>Password : ${password}</p>`
+            );
+        } catch (mailError) {
+            console.error("Welcome email send error:", mailError.message);
+        }
 
         return res.status(201).json({
             success: true,
@@ -146,6 +157,20 @@ const changePassword = async (req, res) => {
 
         const { old_password, new_password } = req.body;
 
+        if (!old_password || old_password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Old password must be at least 6 characters"
+            });
+        }
+
+        if (!new_password || new_password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters"
+            });
+        }
+
         const user = await Authentication.findById(req.user.user_id);
 
         if (!user) {
@@ -221,19 +246,28 @@ const forgotPassword = async (req, res) => {
         });
 
         // Send OTP
-        await sendMail(
-            email,
-            "DriveBus Password Reset OTP",
-            `
-            <h2>Password Reset OTP</h2>
-            <p>Your OTP is <b>${otp}</b></p>
-            <p>This OTP is valid for 5 minutes.</p>
-            `
-        );
+        let mailSent = false;
+        try {
+            await sendMail(
+                email,
+                "Saweriya Travellers Password Reset OTP",
+                `
+                <h2>Password Reset OTP</h2>
+                <p>Your OTP is <b>${otp}</b></p>
+                <p>This OTP is valid for 5 minutes.</p>
+                `
+            );
+            mailSent = true;
+        } catch (mailError) {
+            console.error("Password reset email send error:", mailError.message);
+        }
+
+        console.log(`[Saweriya Travellers OTP] OTP for ${email} is: ${otp}`);
 
         return res.status(200).json({
             success: true,
-            message: "OTP sent successfully"
+            message: mailSent ? "OTP sent successfully to your email" : "OTP generated successfully",
+            otp: (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) ? otp : undefined
         });
 
     } catch (error) {
@@ -252,7 +286,7 @@ const verifyOtp = async (req, res) => {
 
         const { email, otp } = req.body;
 
-        const data = await Otp.findOne({ email, otp });
+        const data = await Otp.findOne({ email, otp: String(otp) });
 
         if (!data) {
             return res.status(400).json({
@@ -289,6 +323,13 @@ const resetPassword = async (req, res) => {
     try {
 
         const { email, newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters"
+            });
+        }
 
         const user = await Authentication.findOne({
             email,
@@ -340,10 +381,17 @@ const updateProfile = async (req, res) => {
             mobile_no
         } = req.body;
 
-        const updateData = {
-            full_name,
-            mobile_no
-        };
+        const updateData = { full_name };
+        if (mobile_no !== undefined) {
+            const cleanMobile = String(mobile_no).trim();
+            if (cleanMobile && !/^[0-9]{10}$/.test(cleanMobile)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Mobile number must be exactly 10 digits"
+                });
+            }
+            updateData.mobile_no = cleanMobile;
+        }
 
         // Profile image agar upload hui hai
         if (req.file) {

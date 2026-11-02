@@ -92,6 +92,8 @@ export default function ResetPassword() {
                             <input
                                 type="password"
                                 name="newPassword"
+                                minLength={6}
+                                placeholder="Enter new password (min 6 characters)"
                                 className="w-full border rounded-lg p-3"
                                 value={formik.values.newPassword}
                                 onChange={formik.handleChange}
@@ -115,6 +117,8 @@ export default function ResetPassword() {
                             <input
                                 type="password"
                                 name="confirmPassword"
+                                minLength={6}
+                                placeholder="Confirm new password (min 6 characters)"
                                 className="w-full border rounded-lg p-3"
                                 value={formik.values.confirmPassword}
                                 onChange={formik.handleChange}

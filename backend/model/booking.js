@@ -1,101 +1,120 @@
 const mongoose = require("mongoose");
 
-
 const bookingSchema = new mongoose.Schema(
-
     {
-
         // ==========================================
         // USER
         // ==========================================
-
         user_id: {
-
             type: mongoose.Schema.Types.ObjectId,
-
             ref: "users",
-
             required: true
-
         },
 
+        user_email: {
+            type: String,
+            default: ""
+        },
 
         // ==========================================
-        // SCHEDULE
+        // SCHEDULE (Optional reference)
         // ==========================================
-
         schedule_id: {
-
             type: mongoose.Schema.Types.ObjectId,
-
             ref: "Schedule",
-
-            required: true
-
+            required: false
         },
-
 
         // ==========================================
         // SEATS
         // ==========================================
-
         seat_number: {
-
             type: [String],
-
             required: true
-
         },
-
 
         // ==========================================
         // TOTAL AMOUNT
         // ==========================================
-
         total_amount: {
-
             type: Number,
-
             required: true
-
         },
 
+        // ==========================================
+        // BUS & ROUTE SNAPSHOT (Guaranteed display)
+        // ==========================================
+        bus_name: {
+            type: String,
+            default: ""
+        },
+
+        register_number: {
+            type: String,
+            default: ""
+        },
+
+        bus_type: {
+            type: String,
+            default: ""
+        },
+
+        model: {
+            type: String,
+            default: ""
+        },
+
+        route: {
+            type: String,
+            default: ""
+        },
+
+        source_city: {
+            type: String,
+            default: ""
+        },
+
+        distance_city: {
+            type: String,
+            default: ""
+        },
+
+        departure: {
+            type: String,
+            default: ""
+        },
+
+        arrival: {
+            type: String,
+            default: ""
+        },
+
+        journey_date: {
+            type: Date,
+            default: null
+        },
 
         // ==========================================
         // BOOKING STATUS
         // ==========================================
-
         booking_status: {
-
             type: String,
-
             enum: [
-
                 "Booked",
-
+                "Confirmed",
                 "Cancelled"
-
             ],
-
             default: "Booked"
-
         }
-
     },
-
     {
-
         timestamps: true
-
     }
-
 );
-
 
 const Booking = mongoose.model(
     "Booking",
     bookingSchema
 );
-
 
 module.exports = Booking;

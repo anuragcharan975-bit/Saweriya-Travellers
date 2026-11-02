@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock,Bus } from "lucide-react";
-import DriveBusLogo from "../../assets/logo.png";
+import SaweriyaLogo from "../../assets/logo.png";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useFormik } from "formik";
@@ -89,14 +89,14 @@ export default function Login() {
 
             <div className="flex items-center gap-3">
                 <Bus className="text-orange-400" size={36} />
-                <span className="text-3xl font-bold">DriveBus</span>
+                <span className="text-3xl font-bold">Saweriya Travellers</span>
               </div>
             <h1 className="text-5xl mt-2 font-bold leading-tight">
               Welcome Back
             </h1>
 
             <p className="mt-4 text-gray-300 leading-8">
-              Login to your DriveBus account to book buses, manage your
+              Login to your Saweriya Travellers account to book buses, manage your
               bookings, track tickets and enjoy a smooth travel experience.
             </p>
 
@@ -116,9 +116,9 @@ export default function Login() {
 
             <div className="lg:hidden flex justify-center mb-6">
               <img
-                src={DriveBusLogo}
-                alt="DriveBus"
-                className="w-36"
+                src={SaweriyaLogo}
+                alt="Saweriya Travellers"
+                className="w-28 h-28 object-contain drop-shadow-md"
               />
             </div>
 
@@ -161,7 +161,7 @@ export default function Login() {
                 <input
                   type="password"
                   name="password"
-                  placeholder="Password"
+                  minLength={6} placeholder="Password (min 6 characters)"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}

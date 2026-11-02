@@ -93,15 +93,17 @@ const HeroSection = () => {
   // ==========================================
   // SEARCH BUS
   // ==========================================
-  const handleSearch = async () => {
+  const handleSearch = async (overrideFrom, overrideTo) => {
     setSearchError("");
+    const srcVal = (typeof overrideFrom === "string" ? overrideFrom : from).trim();
+    const dstVal = (typeof overrideTo === "string" ? overrideTo : to).trim();
 
-    if (!from.trim()) {
+    if (!srcVal) {
       setSearchError("Please enter source city");
       return;
     }
 
-    if (!to.trim()) {
+    if (!dstVal) {
       setSearchError("Please enter destination city");
       return;
     }
@@ -110,8 +112,8 @@ const HeroSection = () => {
       setSearchLoading(true);
 
       const searchData = {
-        source_city: from.trim().toLowerCase(),
-        distance_city: to.trim().toLowerCase(),
+        source_city: srcVal.toLowerCase(),
+        distance_city: dstVal.toLowerCase(),
         trip_date: date ? date : null,
       };
 
@@ -142,8 +144,8 @@ const HeroSection = () => {
       navigate(`/view-buses/${routeId}`, {
         state: {
           route: firstResult?.route || {
-            source_city: from.trim(),
-            distance_city: to.trim(),
+            source_city: srcVal,
+            distance_city: dstVal,
           },
           searchData: searchData,
           searchDate: date,
@@ -172,8 +174,17 @@ const HeroSection = () => {
 
   // Quick route fill helper
   const selectQuickRoute = (src, dst) => {
+    const isAlreadySelected =
+      from.trim().toLowerCase() === src.toLowerCase() &&
+      to.trim().toLowerCase() === dst.toLowerCase();
+
     setFrom(src);
     setTo(dst);
+    setSearchError("");
+
+    if (isAlreadySelected) {
+      handleSearch(src, dst);
+    }
   };
 
   return (
@@ -317,7 +328,8 @@ const HeroSection = () => {
 
               {/* QUICK ROUTE CHIPS */}
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles size={13} className="text-orange-500" />
                   Popular:
                 </span>
                 {[
@@ -326,18 +338,29 @@ const HeroSection = () => {
                   { from: "Mumbai", to: "Pune" },
                   { from: "Bangalore", to: "Goa" },
                   { from: "Ahmedabad", to: "Surat" },
-                ].map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => selectQuickRoute(item.from, item.to)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 hover:bg-orange-50 hover:text-orange-600 text-slate-700 transition border border-slate-200 hover:border-orange-200 flex items-center gap-1.5"
-                  >
-                    <span>{item.from}</span>
-                    <span className="text-slate-400">→</span>
-                    <span>{item.to}</span>
-                  </button>
-                ))}
+                ].map((item, idx) => {
+                  const isSelected =
+                    from.trim().toLowerCase() === item.from.toLowerCase() &&
+                    to.trim().toLowerCase() === item.to.toLowerCase();
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => selectQuickRoute(item.from, item.to)}
+                      title={isSelected ? "Click again to search this route" : `Select ${item.from} → ${item.to}`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 border active:scale-95 ${
+                        isSelected
+                          ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20 font-bold scale-[1.03]"
+                          : "bg-slate-100 hover:bg-orange-50 hover:text-orange-600 text-slate-700 border-slate-200 hover:border-orange-200"
+                      }`}
+                    >
+                      <span>{item.from}</span>
+                      <span className={isSelected ? "text-orange-100" : "text-slate-400"}>→</span>
+                      <span>{item.to}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* SEARCH ERROR NOTIFICATION */}

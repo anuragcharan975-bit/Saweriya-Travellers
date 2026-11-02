@@ -103,7 +103,7 @@ export default function Dashboard() {
             Live Operations Active • {currentDate}
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            DriveBus Operations Console
+            Saweriya Travellers Operations Console
           </h1>
           <p className="mt-3 text-slate-300 text-sm md:text-base leading-relaxed">
             Monitor fleet schedules, driver allocations, and city routes in real-time.

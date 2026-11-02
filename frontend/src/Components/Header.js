@@ -1,6 +1,6 @@
 import React from "react";
 import ProfileDropdown from "./ProfileDropdown";
-import DriveBusLogo from "../assets/adminlogo.png";
+import SaweriyaLogo from "../assets/adminlogo.png";
 import { Globe, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -11,12 +11,20 @@ export default function Header() {
         <div className="h-20 flex items-center justify-between">
           {/* Logo & Portal Badge */}
           <div className="flex items-center gap-4">
-            <Link to="/admin/dashboard" className="flex items-center gap-3">
+            <Link to="/admin/dashboard" className="flex items-center gap-3 group">
               <img
-                src={DriveBusLogo}
-                alt="DriveBus Admin"
-                className="h-10 w-auto object-contain"
+                src={SaweriyaLogo}
+                alt="Saweriya Travellers Admin"
+                className="h-12 w-12 object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
               />
+              <div className="flex flex-col">
+                <span className="text-lg font-black text-slate-900 tracking-tight leading-none">
+                  Saweriya <span className="text-indigo-600">Travellers</span>
+                </span>
+                <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mt-1">
+                  Admin Console
+                </span>
+              </div>
             </Link>
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-100">
               <ShieldCheck size={14} className="text-violet-600" />

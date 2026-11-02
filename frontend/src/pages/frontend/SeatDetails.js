@@ -13,6 +13,7 @@ import {
 import Header from "./Header";
 import Footer from "./Footer";
 import { ViewSchedule } from "../../Service/admin/Schedule";
+import { GetLiveBookedSeats } from "../../Service/frontend/Booking";
 
 export default function BusSeat() {
   const { id } = useParams();
@@ -48,28 +49,40 @@ export default function BusSeat() {
     return `${row}${seatLetters[column]}`;
   });
 
-  const initialBookedSeats = ["1C", "2B", "4D", "6A"];
-
-  const getBookedSeats = () => {
-    try {
-      const savedSeats = localStorage.getItem("bookedSeats");
-      if (savedSeats) {
-        const parsedSeats = JSON.parse(savedSeats);
-        if (Array.isArray(parsedSeats)) {
-          return [
-            ...new Set([...initialBookedSeats, ...parsedSeats]),
-          ];
-        }
-      }
-    } catch (error) {
-      console.log("Error reading booked seats:", error);
-    }
-    return initialBookedSeats;
-  };
-
   const [selected, setSelected] = useState([]);
   const [seatGenders, setSeatGenders] = useState({});
-  const [bookedSeats, setBookedSeats] = useState(getBookedSeats);
+  const [bookedSeats, setBookedSeats] = useState([]);
+  const [isTripCompleted, setIsTripCompleted] = useState(false);
+
+  // Clear stale legacy localStorage key once on mount
+  useEffect(() => {
+    try {
+      localStorage.removeItem("bookedSeats");
+    } catch (e) {}
+  }, []);
+
+  // Fetch live booked seats for this specific schedule & travel date
+  useEffect(() => {
+    const scheduleId = id || scheduleData?._id;
+    const searchDate = location.state?.searchDate || location.state?.searchData?.date || "";
+
+    if (scheduleId) {
+      GetLiveBookedSeats(scheduleId, searchDate)
+        .then((res) => {
+          if (res?.success) {
+            if (res.isCompleted) {
+              // Journey duration has finished, all coach seats are automatically free!
+              setBookedSeats([]);
+              setIsTripCompleted(true);
+            } else {
+              setBookedSeats(res.bookedSeats || []);
+              setIsTripCompleted(false);
+            }
+          }
+        })
+        .catch((err) => console.log("Live booked seats error:", err));
+    }
+  }, [id, scheduleData, location.state]);
 
   // Calculate live male & female counts
   const maleCount = selected.filter(
@@ -132,7 +145,7 @@ export default function BusSeat() {
       return;
     }
 
-    const token = localStorage.getItem("usertoken");
+    const token = localStorage.getItem("usertoken") || localStorage.getItem("token");
     if (!token) {
       Swal.fire({
         icon: "warning",
@@ -145,16 +158,7 @@ export default function BusSeat() {
       return;
     }
 
-    const oldBookedSeats = JSON.parse(
-      localStorage.getItem("bookedSeats") || "[]"
-    );
-
-    const updatedBookedSeats = [
-      ...new Set([...oldBookedSeats, ...initialBookedSeats, ...selected]),
-    ];
-
-    setBookedSeats(updatedBookedSeats);
-    localStorage.setItem("bookedSeats", JSON.stringify(updatedBookedSeats));
+    // Seats will be officially confirmed in database when payment completes
 
     const activeBusObj = bus?.bus || (typeof bus === "object" ? bus : {});
     const activeRouteObj = bus?.route || {};
@@ -275,6 +279,26 @@ export default function BusSeat() {
                 </div>
               </div>
             </div>
+
+            {/* TRIP COMPLETED / SEATS RESET NOTICE */}
+            {isTripCompleted && (
+              <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-4 animate-fade-in shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold">Bus Journey Completed</h4>
+                    <p className="text-xs text-emerald-600 mt-0.5">
+                      This bus has reached its destination. All coach seats have been freed and are available for new bookings!
+                    </p>
+                  </div>
+                </div>
+                <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-200/60 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+                  Seats Reset
+                </span>
+              </div>
+            )}
 
             {/* LIVE PASSENGER GENDER COUNTER STRIP */}
             {selected.length > 0 && (

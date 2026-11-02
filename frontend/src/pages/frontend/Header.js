@@ -68,6 +68,7 @@ export default function Header() {
     { name: "Home", path: "/", icon: HomeIcon },
     { name: "Search Bus", path: "/search-bus", icon: Compass },
     { name: "Routes", path: "/routeBus", icon: RouteIcon },
+    { name: "My Bookings", path: "/my-bookings", icon: Ticket },
     { name: "About", path: "/about", icon: HelpCircle },
     { name: "Contact", path: "/contact", icon: PhoneCall },
   ];
@@ -88,21 +89,21 @@ export default function Header() {
               <div className="relative">
                 <img
                   src={BusLogo}
-                  alt="DriveBus Logo"
+                  alt="Saweriya Travellers Logo"
                   className="h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow"
                 />
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="text-2xl font-black text-white tracking-tight leading-none">
-                    Drive<span className="text-orange-500">Bus</span>
+                    Saweriya <span className="text-orange-500">Travellers</span>
                   </span>
                   <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">
                     Express
                   </span>
                 </div>
                 <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-1">
-                  Smart Intercity Travel
+                  Intercity Bus Service
                 </span>
               </div>
             </Link>
@@ -152,8 +153,17 @@ export default function Header() {
                 </Link>
               </div>
             ) : (
-              /* LOGGED IN USER AVATAR & DROPDOWN */
-              <div className="relative">
+              /* LOGGED IN USER CONTROLS */
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/my-bookings"
+                  className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/15 transition-all duration-200"
+                >
+                  <Ticket size={14} className="text-orange-400" />
+                  <span>My Bookings</span>
+                </Link>
+
+                <div className="relative">
                 <button
                   type="button"
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
@@ -216,12 +226,21 @@ export default function Header() {
                       {/* Navigation Actions */}
                       <div className="space-y-1">
                         <Link
-                          to="/profile"
+                          to="/my-bookings"
                           onClick={() => setProfileDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold hover:bg-orange-500/10 hover:text-orange-400 transition"
                         >
                           <Ticket size={16} className="text-orange-500" />
-                          <span>My Profile & Bookings</span>
+                          <span>My Bookings (Tickets)</span>
+                        </Link>
+
+                        <Link
+                          to="/profile"
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold hover:bg-white/5 text-slate-300 transition"
+                        >
+                          <User size={16} className="text-slate-400" />
+                          <span>Profile Settings</span>
                         </Link>
 
                         <Link
@@ -247,6 +266,7 @@ export default function Header() {
                     </div>
                   </>
                 )}
+                </div>
               </div>
             )}
 

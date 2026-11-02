@@ -22,12 +22,14 @@ import VerifyOtp from "./pages/frontend/Verify";
 import EditProfile from "./pages/frontend/EditProfile";
 import ResetPassword from "./pages/frontend/ResetPassword";
 import Ticket from "./pages/frontend/Ticket";
+import MyBookings from "./pages/frontend/MyBookings";
 
 
 import AdminLogin from "./pages/admin/Login";
 import AdminLayout from "./Components/Layout";
 
 import Dashboard from "./pages/admin/dashboard/Dashboard";
+import AdminProfile from "./pages/admin/profile/Profile";
 
 import Buses from "./pages/admin/buses/Index";
 import BusAdd from "./pages/admin/buses/Add";
@@ -65,6 +67,7 @@ import User from "./pages/admin/users/Index";
 
 import Subscription from "./pages/admin/subscription/Index";
 import ContactForm from "./pages/admin/Contact/Index";
+import AdminBookings from "./pages/admin/booking/Index";
 
 
 function App() {
@@ -166,6 +169,16 @@ function App() {
             element={<Ticket />}
           />
 
+          <Route
+            path="my-bookings"
+            element={<MyBookings />}
+          />
+
+          <Route
+            path="bookings"
+            element={<MyBookings />}
+          />
+
         </Route>
 
 
@@ -184,6 +197,18 @@ function App() {
             <Route
               path="dashboard"
               element={<Dashboard />}
+            />
+
+            {/* BOOKINGS MANAGEMENT */}
+            <Route
+              path="booking"
+              element={<AdminBookings />}
+            />
+
+            {/* ADMIN PROFILE */}
+            <Route
+              path="profile"
+              element={<AdminProfile />}
             />
 
 

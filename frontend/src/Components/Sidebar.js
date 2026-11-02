@@ -13,6 +13,8 @@ import {
   Tag,
   Mail,
   MessageSquare,
+  ShieldCheck,
+  Ticket,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -24,6 +26,14 @@ export default function Sidebar() {
       path: "/admin/dashboard",
       icon: LayoutDashboard,
       active: location.pathname === "/admin/dashboard",
+    },
+    {
+      title: "Bookings",
+      path: "/admin/booking",
+      icon: Ticket,
+      active:
+        location.pathname === "/admin/booking" ||
+        location.pathname.startsWith("/admin/booking/"),
     },
     {
       title: "Users",
@@ -112,6 +122,12 @@ export default function Sidebar() {
       active:
         location.pathname === "/admin/contact" ||
         location.pathname.startsWith("/admin/contact/"),
+    },
+    {
+      title: "Admin Profile",
+      path: "/admin/profile",
+      icon: ShieldCheck,
+      active: location.pathname === "/admin/profile",
     },
   ];
 

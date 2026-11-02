@@ -4,7 +4,31 @@ const Route = require("../../model/route")
 const addRoute = async (req, res) => {
 
     try {
-        const data = await Route.create(req.body);
+        const routeData = {
+            ...req.body,
+            status: req.body.status !== undefined ? req.body.status : true
+        };
+        const data = await Route.create(routeData);
+
+        // Auto-assign an active bus schedule so buses show up immediately on customer side
+        try {
+            const Bus = require("../../model/bus");
+            const Schedule = require("../../model/schedule");
+            const busDoc = await Bus.findOne({ status: true }) || await Bus.findOne();
+            if (busDoc) {
+                await Schedule.create({
+                    route: data._id,
+                    bus: busDoc._id,
+                    departure_time: "09:30 PM",
+                    arrival_time: "05:00 AM",
+                    trip_date: new Date(),
+                    status: true
+                });
+            }
+        } catch (schedErr) {
+            console.log("Auto-schedule note:", schedErr.message);
+        }
+
         res.status(201).json({
             success: "true",
             message: "Route added successfully",
@@ -156,7 +180,7 @@ const ViewPopularRoutes = async (req, res) => {
 
         const routes = await Route.find()
             .sort({ createdAt: -1 })
-            .limit(4);
+            .limit(10);
 
 
         res.status(200).json({

@@ -52,7 +52,7 @@ export default function AdminLoader({ duration = 1500 }) {
 
         {/* Title */}
         <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-          <span>DriveBus Admin</span>
+          <span>Saweriya Travellers Admin</span>
           <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-200">
             Console
           </span>

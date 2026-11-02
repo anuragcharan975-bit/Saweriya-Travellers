@@ -32,7 +32,6 @@ import {
   ThumbsUp,
   Globe,
 } from "lucide-react";
-import BusLogo from "../../assets/logo.png"
 import Swal from "sweetalert2";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -349,7 +348,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <Bus className="text-orange-500" size={34} />
                 <h2 className="text-2xl font-bold text-white">
-                  Drive<span className="text-orange-500">Bus</span>
+                  Saweriya <span className="text-orange-500">Travellers</span>
                 </h2>
               </div>
               <p className="mt-4 leading-relaxed">India's trusted online bus booking platform. Making travel comfortable since 2020.</p>
@@ -391,7 +390,7 @@ export default function Home() {
 
             <div>
               <h3 className="text-lg text-white font-bold mb-4">Contact</h3>
-              <p className="flex items-center gap-2"><Mail size={16} className="text-orange-400" /> info@drivebus.com</p>
+              <p className="flex items-center gap-2"><Mail size={16} className="text-orange-400" /> info@saweriyatravellers.com</p>
               <p className="flex items-center gap-2 mt-2"><Phone size={16} className="text-orange-400" /> +91 9876543210</p>
               <p className="flex items-center gap-2 mt-2"><Map size={16} className="text-orange-400" /> Jaipur, Rajasthan</p>
               <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -404,7 +403,7 @@ export default function Home() {
 
         <div className="border-t border-slate-800">
           <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center">
-            <p>© 2026 DriveBus. All Rights Reserved.</p>
+            <p>© 2026 Saweriya Travellers. All Rights Reserved.</p>
             <div className="flex gap-6 mt-2 md:mt-0">
               <span className="hover:text-orange-400 cursor-pointer transition-colors">Privacy Policy</span>
               <span className="hover:text-orange-400 cursor-pointer transition-colors">Terms of Service</span>

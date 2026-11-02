@@ -41,14 +41,9 @@ export default function Register() {
         .email("Invalid email address")
         .required("Email is required"),
 
-      mobile_no: Yup.number()
-        .typeError("Mobile number must be numeric")
+      mobile_no: Yup.string()
         .required("Mobile number is required")
-        .test(
-          "len",
-          "Mobile number must be exactly 10 digits",
-          (value) => value && value.toString().length === 10
-        ),
+        .matches(/^[0-9]{10}$/, "Mobile number must be exactly 10 digits"),
 
       password: Yup.string()
         .min(6, "Password must be at least 6 characters")
@@ -96,7 +91,7 @@ export default function Register() {
             <div>
               <div className="flex items-center gap-3">
                 <Bus className="text-orange-400" size={36} />
-                <span className="text-3xl font-bold">DriveBus</span>
+                <span className="text-3xl font-bold">Saweriya Travellers</span>
               </div>
               
               <h1 className="text-4xl font-bold mt-10 leading-tight">
@@ -207,11 +202,15 @@ export default function Register() {
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input
-                    type="text"
+                    type="tel"
                     name="mobile_no"
+                    maxLength={10}
                     placeholder="Enter 10-digit mobile number"
                     value={formik.values.mobile_no}
-                    onChange={formik.handleChange}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                      formik.setFieldValue("mobile_no", val);
+                    }}
                     onBlur={formik.handleBlur}
                     className={`w-full pl-10 pr-3 py-3.5 border ${
                       formik.touched.mobile_no && formik.errors.mobile_no
@@ -235,7 +234,8 @@ export default function Register() {
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="Create a strong password"
+                    placeholder="Create a strong password (minimum 6 characters)"
+                    minLength={6}
                     value={formik.values.password}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}

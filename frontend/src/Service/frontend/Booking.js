@@ -33,19 +33,29 @@ export const CreateBooking = async (data) => {
 
 // ================= BOOKING HISTORY =================
 
-export const BookingHistory = async () => {
+export const BookingHistory = async (explicitUserId, explicitEmail) => {
     const token = localStorage.getItem("usertoken") || localStorage.getItem("token") || "";
-    let userId = "";
-    try {
-        const userData = JSON.parse(localStorage.getItem("userdata") || "{}");
-        userId = userData?._id || userData?.id || localStorage.getItem("user_id") || "";
-    } catch (e) {
-        // ignore parse error
+    let userId = (typeof explicitUserId === "string" && explicitUserId !== "[object Object]") ? explicitUserId : "";
+    let userEmail = (typeof explicitEmail === "string" && explicitEmail !== "[object Object]") ? explicitEmail : "";
+
+    if (!userId || !userEmail) {
+        try {
+            const userData = JSON.parse(localStorage.getItem("userdata") || "{}");
+            if (!userId) userId = userData?._id || userData?.id || userData?.user_id || localStorage.getItem("user_id") || "";
+            if (!userEmail) userEmail = userData?.email || userData?.user_email || localStorage.getItem("user_email") || "";
+        } catch (e) {
+            // ignore parse error
+        }
     }
 
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const url = userId
-        ? `${API_url}/frontend/booking/history?user_id=${userId}`
+    const params = new URLSearchParams();
+    if (userId && userId !== "[object Object]") params.append("user_id", userId);
+    if (userEmail && userEmail !== "[object Object]") params.append("email", userEmail);
+
+    const queryString = params.toString();
+    const url = queryString
+        ? `${API_url}/frontend/booking/history?${queryString}`
         : `${API_url}/frontend/booking/history`;
 
     const res = await axios.get(url, { headers });
@@ -81,4 +91,21 @@ export const CancelBooking = async (id) => {
     );
 
     return res.data;
+};
+
+
+// ================= GET LIVE BOOKED SEATS (AUTO-FREED WHEN TRIP COMPLETES) =================
+
+export const GetLiveBookedSeats = async (scheduleId, journeyDate) => {
+    try {
+        let url = `${API_url}/frontend/booking/booked-seats/${scheduleId || ""}`;
+        if (journeyDate) {
+            url += `?date=${encodeURIComponent(journeyDate)}`;
+        }
+        const res = await axios.get(url);
+        return res.data;
+    } catch (error) {
+        console.error("GetLiveBookedSeats error:", error);
+        return { success: false, bookedSeats: [], isCompleted: false };
+    }
 };

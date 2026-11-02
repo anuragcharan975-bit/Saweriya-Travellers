@@ -1,19 +1,35 @@
 const Staff = require("../../model/staff");
 
 const addStaff = async (req, res) => {
-
   try {
-        const { email } = req.body;
+    const { email } = req.body;
 
-        const existingStaff = await Staff.findOne({ email });
+    const existingStaff = await Staff.findOne({ email });
 
-        if (existingStaff) {
-            return res.status(409).json({
-                success: false,
-                message: "Staff with this email already exists."
-            });
-        }
-    const data = await Staff.create({ ...req.body, photo: req.file ? req.file.filename : "" });
+    if (existingStaff) {
+      return res.status(409).json({
+        success: false,
+        message: "Staff with this email already exists.",
+      });
+    }
+
+    const staffData = { ...req.body };
+
+    // Clean bus reference if empty
+    if (
+      !staffData.bus ||
+      staffData.bus === "" ||
+      staffData.bus === "null" ||
+      staffData.bus === "undefined"
+    ) {
+      delete staffData.bus;
+    }
+
+    if (req.file) {
+      staffData.photo = req.file.filename;
+    }
+
+    const data = await Staff.create(staffData);
 
     res.status(201).json({
       success: true,
@@ -31,7 +47,6 @@ const addStaff = async (req, res) => {
 };
 
 const findStaff = async (req, res) => {
-
   try {
     const { id } = req.params;
 
@@ -53,21 +68,31 @@ const findStaff = async (req, res) => {
 };
 
 const updateStaff = async (req, res) => {
-
   try {
     const { id } = req.params;
 
     const updateData = { ...req.body };
 
+    // Clean bus reference if empty
+    if (
+      !updateData.bus ||
+      updateData.bus === "" ||
+      updateData.bus === "null" ||
+      updateData.bus === "undefined"
+    ) {
+      updateData.bus = null;
+    }
+
     if (req.file) {
       updateData.photo = req.file.filename;
     }
-    const data = await Staff.updateOne({ _id: id }, updateData)
+
+    const data = await Staff.findByIdAndUpdate(id, updateData, { new: true });
 
     res.status(200).json({
       success: true,
       message: "Staff Updated Successfully",
-      data: data
+      data: data,
     });
   } catch (error) {
     console.log(error);
@@ -81,11 +106,10 @@ const updateStaff = async (req, res) => {
 };
 
 const updateStaffStatus = async (req, res) => {
-
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const data = await Staff.updateOne({ _id: id }, { status: status })
+    const data = await Staff.updateOne({ _id: id }, { status: status });
 
     res.status(200).json({
       success: true,
@@ -104,7 +128,6 @@ const updateStaffStatus = async (req, res) => {
 };
 
 const deleteStaff = async (req, res) => {
-
   try {
     const { id } = req.params;
     const data = await Staff.deleteOne({ _id: id });
@@ -112,7 +135,7 @@ const deleteStaff = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Staff Deleted Successfully",
-      data: data
+      data: data,
     });
   } catch (error) {
     console.log(error);
@@ -183,5 +206,5 @@ module.exports = {
   updateStaff,
   updateStaffStatus,
   deleteStaff,
-  findAllStaff
+  findAllStaff,
 };
