@@ -287,13 +287,28 @@ export default function BusSeat() {
       return;
     }
 
-    if (selected.length >= 6) {
+    // GROUP SEAT LIMIT UP TO 12 SEATS
+    if (selected.length >= 12) {
       Swal.fire({
         icon: "info",
-        title: "Seat Limit Reached",
-        text: "You can select a maximum of 6 seats per booking.",
+        title: "Group Seat Limit Reached",
+        text: "You can select a maximum of 12 seats per group booking.",
+        confirmButtonColor: "#059669",
       });
       return;
+    }
+
+    if (selected.length >= 6 && !isGroupMode) {
+      // Auto-unlock group saver mode for 7-12 seats with 30% discount
+      setBookingMode("group");
+      Swal.fire({
+        icon: "success",
+        title: "👥 Group Booking Mode Activated!",
+        text: "Seat limit extended to 12 seats with 30% Group Discount!",
+        confirmButtonColor: "#059669",
+        timer: 2200,
+        timerProgressBar: true,
+      });
     }
 
     // Default gender: in couple mode, if 1st seat is Male, make 2nd seat Female automatically!
@@ -590,7 +605,7 @@ export default function BusSeat() {
                   {isGroupMode && !isCoupleMode && (
                     <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1">
                       <Users size={12} />
-                      <span>30% Group Saver Active</span>
+                      <span>30% Group Saver Active (Limit: 12 Seats)</span>
                     </span>
                   )}
                 </div>
@@ -692,7 +707,7 @@ export default function BusSeat() {
                         isCoupleMode ? "text-rose-200/80" : "text-slate-500"
                       }`}
                     >
-                      Couples get <b>35% OFF</b> with mandatory female passenger • Groups (4+ seats) get <b>30% OFF</b>!
+                      Couples get <b>35% OFF</b> with mandatory female passenger • Groups get <b>30% OFF (Up to 12 seats)</b>!
                     </p>
                   </div>
                 </div>
@@ -744,7 +759,7 @@ export default function BusSeat() {
                     }`}
                   >
                     <Users size={14} />
-                    <span>👥 Group Saver (30% OFF)</span>
+                    <span>👥 Group Saver (30% OFF • 12 Seats)</span>
                   </button>
                 </div>
               </div>
