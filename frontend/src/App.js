@@ -120,6 +120,11 @@ function App() {
             element={<Search />}
           />
 
+          <Route
+            path="search"
+            element={<Search />}
+          />
+
           {/* VIEW BUSES */}
 
           <Route

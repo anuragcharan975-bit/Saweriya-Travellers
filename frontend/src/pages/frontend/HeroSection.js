@@ -130,20 +130,17 @@ const HeroSection = () => {
         return;
       }
 
-      // If multiple routes match (e.g. typing 's' or 'd' matching several destinations), take user to Search page to see all
-      if (results.length > 1) {
-        navigate(`/search?from=${encodeURIComponent(srcVal)}&to=${encodeURIComponent(dstVal)}${date ? `&date=${date}` : ""}`, {
-          state: {
-            from: srcVal,
-            to: dstVal,
-            date: date,
-            searchResults: results,
-          },
-        });
-        return;
+      // Prioritize Saweriya Seth when searching 'sa', 'sawriya', etc.
+      let firstResult = results[0];
+      const saweriyaMatch = results.find(
+        (r) =>
+          /saw|seth|sanw/i.test(r?.route?.distance_city || "") ||
+          /saw|seth|sanw/i.test(r?.route?.route_name || "")
+      );
+      if (saweriyaMatch && (/^sa/i.test(dstVal) || /saw|seth/i.test(dstVal))) {
+        firstResult = saweriyaMatch;
       }
 
-      const firstResult = results[0];
       const routeId =
         firstResult?.route?._id ||
         firstResult?.route_id ||
@@ -163,6 +160,7 @@ const HeroSection = () => {
           searchData: searchData,
           searchDate: date,
           searchResults: results,
+          allMatchedRoutes: results.map((r) => r.route).filter(Boolean),
         },
       });
     } catch (error) {

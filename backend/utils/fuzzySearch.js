@@ -107,7 +107,28 @@ function findMatchingRoutes(allRoutes, rawSrc, rawDst) {
             return srcOk && dstOk;
         });
 
-        if (forward.length > 0) return forward;
+        if (forward.length > 0) {
+            forward.sort((a, b) => {
+                const aDst = (a.distance_city || "").toLowerCase();
+                const bDst = (b.distance_city || "").toLowerCase();
+                const dLower = dstInput.toLowerCase();
+
+                // If destination query begins with 'sa' or matches saweriya, prioritize Saweriya Seth
+                if (/^sa/i.test(dLower) || /saw|seth|sanw/i.test(dLower)) {
+                    const aIsSaw = /saw|seth|sanw/i.test(aDst);
+                    const bIsSaw = /saw|seth|sanw/i.test(bDst);
+                    if (aIsSaw && !bIsSaw) return -1;
+                    if (!aIsSaw && bIsSaw) return 1;
+                }
+
+                if (aDst === dLower && bDst !== dLower) return -1;
+                if (bDst === dLower && aDst !== dLower) return 1;
+                if (aDst.startsWith(dLower) && !bDst.startsWith(dLower)) return -1;
+                if (bDst.startsWith(dLower) && !aDst.startsWith(dLower)) return 1;
+                return 0;
+            });
+            return forward;
+        }
 
         // Priority 2: Route name matches both
         let byName = allRoutes.filter((r) => {

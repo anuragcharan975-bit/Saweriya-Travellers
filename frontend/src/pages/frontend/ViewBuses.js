@@ -25,6 +25,7 @@ export default function ViewBusesList() {
   const routeFromSearch = location.state?.route || {};
   const searchData = location.state?.searchData || {};
   const searchDate = location.state?.searchDate || "";
+  const allMatchedRoutes = location.state?.allMatchedRoutes || [];
 
   const [buses, setBuses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +128,38 @@ export default function ViewBusesList() {
                       <ShieldCheck size={16} /> GPS Enabled Fleet
                     </span>
                   </p>
+
+                  {allMatchedRoutes.length > 1 && (
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-slate-300 font-medium">Matching Routes:</span>
+                      {allMatchedRoutes.map((mr) => {
+                        const isCurrent = String(mr._id) === String(id);
+                        return (
+                          <button
+                            key={mr._id}
+                            type="button"
+                            onClick={() => {
+                              navigate(`/view-buses/${mr._id}`, {
+                                state: {
+                                  route: mr,
+                                  searchData,
+                                  searchDate,
+                                  allMatchedRoutes,
+                                },
+                              });
+                            }}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                              isCurrent
+                                ? "bg-orange-500 text-white shadow-sm ring-1 ring-white/30"
+                                : "bg-white/10 hover:bg-white/20 text-slate-200"
+                            }`}
+                          >
+                            {mr.source_city} ➔ {mr.distance_city}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">

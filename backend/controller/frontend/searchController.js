@@ -79,6 +79,17 @@ const searchBus = async (req, res) => {
                 .sort({ createdAt: -1 });
         }
 
+        // Preserve route relevance order (e.g. Saweriya Seth prioritized over Salasar)
+        const routeRank = new Map();
+        routes.forEach((r, idx) => routeRank.set(String(r._id), idx));
+        filteredData.sort((a, b) => {
+            const aId = String(a.route?._id || a.route);
+            const bId = String(b.route?._id || b.route);
+            const aRank = routeRank.has(aId) ? routeRank.get(aId) : 999;
+            const bRank = routeRank.has(bId) ? routeRank.get(bId) : 999;
+            return aRank - bRank;
+        });
+
         // Auto-provision if route has no schedule yet
         if (filteredData.length === 0 && routes.length > 0) {
             const busDoc = await Bus.findOne({ status: true }) || await Bus.findOne();
