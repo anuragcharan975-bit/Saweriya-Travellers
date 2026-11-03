@@ -245,45 +245,23 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ================= POPULAR ROUTES QUICK STRIP ================= */}
-        <div className="mt-14 pt-10 border-t border-slate-800/70">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-orange-500 flex items-center gap-1.5">
-                <Sparkles size={13} />
-                <span>Popular Intercity Routes</span>
-              </span>
-              <h4 className="text-base font-bold text-white mt-0.5">
-                Click to view live buses & book tickets instantly
-              </h4>
-            </div>
-
-            <Link
-              to="/routeBus"
-              className="text-xs font-bold text-slate-300 hover:text-orange-400 flex items-center gap-1 transition self-start sm:self-auto"
-            >
-              <span>Explore All Routes</span>
-              <ChevronRight size={14} />
-            </Link>
+        {/* Popular Intercity Routes Strip */}
+        <div className="mt-12 pt-8 border-t border-slate-900">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">
+              Popular Daily Express Routes:
+            </span>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-            {popularFooterRoutes.map((route, i) => (
+          <div className="flex flex-wrap gap-2.5">
+            {popularFooterRoutes.map((route) => (
               <Link
-                key={i}
-                to={`/view-buses/${route.id}`}
-                className="group p-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-800 hover:border-orange-500/50 transition-all duration-200 flex flex-col justify-between shadow-xs hover:shadow-lg"
+                key={route.id}
+                to={'/view-buses/' + route.id}
+                className="group inline-flex items-center gap-2 bg-slate-900/90 hover:bg-orange-500/10 text-slate-300 hover:text-orange-400 px-3.5 py-2 rounded-xl text-xs border border-slate-800 hover:border-orange-500/30 transition-all duration-200"
               >
-                <div className="flex items-center justify-between text-[11px] text-slate-400 mb-2">
-                  <span className="font-bold text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-orange-400 border border-white/5 uppercase tracking-wide">
-                    {route.tag}
-                  </span>
-                  <span className="text-white font-extrabold">{route.fare}</span>
-                </div>
-                <div className="text-sm font-bold text-slate-200 group-hover:text-orange-400 transition-colors flex items-center justify-between gap-1">
-                  <span className="truncate">{route.name}</span>
-                  <ArrowUpRight size={15} className="text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
-                </div>
+                <span className="font-semibold">{route.name}</span>
+                <span className="text-[10px] text-slate-500 group-hover:text-orange-300">from {route.fare}</span>
+                <ArrowUpRight size={13} className="text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
             ))}
           </div>

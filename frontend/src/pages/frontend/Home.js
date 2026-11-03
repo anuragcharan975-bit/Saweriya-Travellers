@@ -1,24 +1,14 @@
 import { Link } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import PopularRoutes from "./PopularRoutes";
 import {
   Bus,
-  MapPin,
-  CalendarDays,
   Users,
-  Search,
-  CheckCircle,
   ArrowRight,
   Shield,
   Headphones,
   Clock,
   Truck,
-  Gift,
-  ChevronRight,
-  Phone,
-  Mail,
-  Map,
-  PlayCircle,
   CreditCard,
   Wallet,
   Ticket,
@@ -28,11 +18,9 @@ import {
   Crown,
   Star,
   Sparkles,
-  Award,
   ThumbsUp,
   Globe,
 } from "lucide-react";
-import Swal from "sweetalert2";
 import Header from "./Header";
 import Footer from "./Footer";
 import Subscription from "./Subscription";
@@ -397,108 +385,6 @@ export default function Home() {
 
       <Subscription />
 
-      {/* ========== CTA BANNER ========== */}
-      <section className="py-24 bg-gradient-to-br from-slate-900 to-slate-800 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <div className="animate-on-scroll">
-            <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-orange-500/30">
-              <Bus className="text-white" size={40} />
-            </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-white">
-              Ready to <span className="text-orange-400">Travel</span>?
-            </h2>
-            <p className="text-gray-400 mt-4 text-lg max-w-2xl mx-auto">
-              Book your bus ticket now and enjoy a comfortable journey with India's most trusted bus booking platform.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <button className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-10 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 shadow-lg shadow-orange-500/30 flex items-center gap-2">
-                Book Now
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
-              </button>
-              <button className="group border border-white/30 hover:bg-white/10 px-10 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 backdrop-blur-sm flex items-center gap-2">
-                Learn More
-                <ChevronRight className="group-hover:translate-x-1 transition-transform" size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========== FOOTER ========== */}
-      {/* <footer className="bg-slate-950 text-gray-400 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div>
-              <div className="flex items-center gap-3">
-                <Bus className="text-orange-500" size={34} />
-                <h2 className="text-2xl font-bold text-white">
-                  Saweriya <span className="text-orange-500">Travellers</span>
-                </h2>
-              </div>
-              <p className="mt-4 leading-relaxed">India's trusted online bus booking platform. Making travel comfortable since 2020.</p>
-              <div className="flex gap-3 mt-6">
-                <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-orange-500 cursor-pointer transition-all duration-300 hover:scale-110">
-                  <span className="text-white">f</span>
-                </div>
-                <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-orange-500 cursor-pointer transition-all duration-300 hover:scale-110">
-                  <span className="text-white">🐦</span>
-                </div>
-                <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-orange-500 cursor-pointer transition-all duration-300 hover:scale-110">
-                  <span className="text-white">📷</span>
-                </div>
-                <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-orange-500 cursor-pointer transition-all duration-300 hover:scale-110">
-                  <span className="text-white">▶</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg text-white font-bold mb-4">Company</h3>
-              <ul className="space-y-3">
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">About Us</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Careers</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Blog</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Contact</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg text-white font-bold mb-4">Services</h3>
-              <ul className="space-y-3">
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Bus Booking</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Live Tracking</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Offers</li>
-                <li className="hover:text-orange-400 cursor-pointer transition-colors hover:translate-x-1 transform duration-300">Support</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg text-white font-bold mb-4">Contact</h3>
-              <p className="flex items-center gap-2"><Mail size={16} className="text-orange-400" /> info@saweriyatravellers.com</p>
-              <p className="flex items-center gap-2 mt-2"><Phone size={16} className="text-orange-400" /> +91 9876543210</p>
-              <p className="flex items-center gap-2 mt-2"><Map size={16} className="text-orange-400" /> Jaipur, Rajasthan</p>
-              <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                <p className="text-sm text-gray-500">Working Hours</p>
-                <p className="text-white">24/7 Available</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center">
-            <p>© 2026 Saweriya Travellers. All Rights Reserved.</p>
-            <div className="flex gap-6 mt-2 md:mt-0">
-              <span className="hover:text-orange-400 cursor-pointer transition-colors">Privacy Policy</span>
-              <span className="hover:text-orange-400 cursor-pointer transition-colors">Terms of Service</span>
-              <span className="hover:text-orange-400 cursor-pointer transition-colors">Cookie Policy</span>
-            </div>
-          </div>
-        </div>
-      </footer> */}
       <Footer />
       {/* Custom CSS for animations */}
       <style jsx>{`
