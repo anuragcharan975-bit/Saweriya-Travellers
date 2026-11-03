@@ -157,35 +157,122 @@ export default function Home() {
       </section>
 
       {/* ========== TOP DESTINATIONS ========== */}
-      <section className="py-24 bg-gradient-to-b from-slate-50 to-white">
+      <section className="py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16 animate-on-scroll">
-            <span className="inline-block px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-sm font-semibold mb-4">
-              Top Destinations
-            </span>
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">Explore <span className="text-orange-500">India</span></h2>
-            <p className="text-gray-500 mt-3">Most visited cities by our travelers</p>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-orange-200">
+              <Sparkles size={13} />
+              <span>Top Destinations</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">
+              Explore <span className="text-orange-500">India</span>
+            </h2>
+            <p className="text-gray-500 mt-3 text-base">
+              Most visited cities with guaranteed daily Volvo & luxury sleeper buses
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             {[
-              { city: "Delhi", color: "from-red-500 to-orange-500" },
-              { city: "Mumbai", color: "from-blue-500 to-indigo-500" },
-              { city: "Jaipur", color: "from-orange-500 to-yellow-500" },
-              { city: "Goa", color: "from-green-500 to-emerald-500" },
-              { city: "Kerala", color: "from-purple-500 to-pink-500" },
-              { city: "Varanasi", color: "from-yellow-500 to-orange-500" },
+              {
+                city: "Delhi",
+                tagline: "India Gate & Red Fort",
+                image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+                buses: "40+ Buses",
+                fare: "₹450",
+                badge: "Most Booked",
+                routeId: "6a86d0e1799407248ea06fc9",
+              },
+              {
+                city: "Jaipur",
+                tagline: "Pink City & Hawa Mahal",
+                image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+                buses: "50+ Buses",
+                fare: "₹200",
+                badge: "Heritage",
+                routeId: "6ae86e457b369fafc905aaeb",
+              },
+              {
+                city: "Mumbai",
+                tagline: "Marine Drive & Gateway",
+                image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
+                buses: "60+ Buses",
+                fare: "₹350",
+                badge: "Expressway",
+                routeId: "6ae86e457b369fafc905aaed",
+              },
+              {
+                city: "Goa",
+                tagline: "Beaches & Sunsets",
+                image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+                buses: "20+ Buses",
+                fare: "₹950",
+                badge: "Luxury AC",
+                routeId: "6ae86e457b369fafc905aaef",
+              },
+              {
+                city: "Pune",
+                tagline: "Hills & Deccan Vibe",
+                image: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+                buses: "30+ Buses",
+                fare: "₹350",
+                badge: "Fast Trip",
+                routeId: "6ae86e457b369fafc905aaed",
+              },
+              {
+                city: "Surat",
+                tagline: "Diamond & Riverfront",
+                image: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=800&q=80",
+                buses: "25+ Buses",
+                fare: "₹420",
+                badge: "Intercity",
+                routeId: "6ae86e467b369fafc905aaf1",
+              },
             ].map((dest, i) => (
-              <div
+              <Link
                 key={i}
-                className="group bg-white rounded-2xl p-6 text-center shadow hover:shadow-xl transition-all duration-500 hover:-translate-y-2 animate-on-scroll"
-                style={{ animationDelay: `${i * 100}ms` }}
+                to={`/view-buses/${dest.routeId}`}
+                className="group relative rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2.5 flex flex-col justify-end min-h-[300px] border border-slate-200/60"
               >
-                <div className={`w-16 h-16 bg-gradient-to-br ${dest.color} rounded-full flex items-center justify-center mx-auto group-hover:rotate-12 transition-transform duration-500`}>
-                  <MapPin className="text-white" size={24} />
+                {/* Background Destination Photo with Ken-Burns Zoom */}
+                <img
+                  src={dest.image}
+                  alt={dest.city}
+                  className="absolute inset-0 w-full h-full object-cover object-center transform scale-100 group-hover:scale-120 transition-transform duration-700 ease-out"
+                  loading="lazy"
+                />
+
+                {/* Dark Vignette Overlay for Crisp Text */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent opacity-90 group-hover:opacity-75 transition-opacity duration-300" />
+
+                {/* Top Badges */}
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/90 text-white backdrop-blur-md shadow-sm uppercase tracking-wider">
+                    {dest.badge}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-200 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20">
+                    {dest.buses}
+                  </span>
                 </div>
-                <p className="font-bold text-gray-900 mt-3">{dest.city}</p>
-                <p className="text-xs text-gray-500">Popular</p>
-              </div>
+
+                {/* Content at Bottom */}
+                <div className="relative z-10 p-4 text-white">
+                  <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider block">
+                    Starting from {dest.fare}
+                  </span>
+                  <h3 className="text-xl font-black text-white group-hover:text-orange-400 transition-colors mt-0.5">
+                    {dest.city}
+                  </h3>
+                  <p className="text-xs text-slate-300 line-clamp-1 mt-0.5">
+                    {dest.tagline}
+                  </p>
+
+                  <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs font-bold text-orange-300 group-hover:text-white transition-colors">
+                    <span>View Buses</span>
+                    <ArrowRight size={14} className="group-hover:translate-x-1.5 transition-transform duration-300" />
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
