@@ -266,97 +266,23 @@ const searchSchedule = async (req, res) => {
         // VALIDATION
         // ==========================================
 
-        if (!source || !destination) {
+        if (!source && !destination) {
             return res.status(400).json({
                 success: false,
-                message: "Source city and destination city are required"
+                message: "Please enter a departure city or destination city"
             });
         }
 
         // ==========================================
-        // FIND ROUTES (Smart Bidirectional & Keyword Match)
+        // FIND ROUTES (Intelligent Fuzzy & Typo Tolerance Match)
         // ==========================================
 
         const Route = require("../../model/route");
         const Bus = require("../../model/bus");
+        const { findMatchingRoutes } = require("../../utils/fuzzySearch");
 
-        const escapeRegex = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-
-        const srcRegex = new RegExp(escapeRegex(source), "i");
-        const dstRegex = new RegExp(escapeRegex(destination), "i");
-
-        const srcTokens = source.split(/\s+/).filter(Boolean);
-        const dstTokens = destination.split(/\s+/).filter(Boolean);
-
-        const conditions = [
-            // 1. Forward match
-            {
-                source_city: { $regex: srcRegex },
-                distance_city: { $regex: dstRegex }
-            },
-            // 2. Reverse match
-            {
-                source_city: { $regex: dstRegex },
-                distance_city: { $regex: srcRegex }
-            },
-            // 3. Route name contains both
-            {
-                $and: [
-                    { route_name: { $regex: srcRegex } },
-                    { route_name: { $regex: dstRegex } }
-                ]
-            }
-        ];
-
-        // 4. Token combinations (e.g. 'saweriya' in 'saweriya seth')
-        srcTokens.forEach((st) => {
-            if (st.length > 2) {
-                const sReg = new RegExp(escapeRegex(st), "i");
-                dstTokens.forEach((dt) => {
-                    if (dt.length > 2) {
-                        const dReg = new RegExp(escapeRegex(dt), "i");
-                        conditions.push({
-                            source_city: { $regex: sReg },
-                            distance_city: { $regex: dReg }
-                        });
-                        conditions.push({
-                            source_city: { $regex: dReg },
-                            distance_city: { $regex: sReg }
-                        });
-                        conditions.push({
-                            $and: [
-                                { route_name: { $regex: sReg } },
-                                { route_name: { $regex: dReg } }
-                            ]
-                        });
-                    }
-                });
-            }
-        });
-
-        let routes = await Route.find({ $or: conditions });
-
-        // Fallback fuzzy search if still no routes found
-        if (routes.length === 0) {
-            const allRoutes = await Route.find();
-            const sLower = source.toLowerCase();
-            const dLower = destination.toLowerCase();
-
-            routes = allRoutes.filter((r) => {
-                const rSrc = (r.source_city || "").toLowerCase();
-                const rDst = (r.distance_city || "").toLowerCase();
-                const rName = (r.route_name || "").toLowerCase();
-
-                const fwd = (rSrc.includes(sLower) || sLower.includes(rSrc)) &&
-                            (rDst.includes(dLower) || dLower.includes(rDst));
-                const rev = (rSrc.includes(dLower) || dLower.includes(rSrc)) &&
-                            (rDst.includes(sLower) || sLower.includes(rDst));
-                const name = (rName.includes(sLower) || sLower.includes(rName)) &&
-                             (rName.includes(dLower) || dLower.includes(rName));
-
-                return fwd || rev || name;
-            });
-        }
+        const allRoutes = await Route.find();
+        const routes = findMatchingRoutes(allRoutes, source, destination);
 
         // ==========================================
         // NO ROUTE FOUND
@@ -365,7 +291,7 @@ const searchSchedule = async (req, res) => {
         if (routes.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: "No route found",
+                message: "No route found for this search. Please check city spelling or try a nearby city.",
                 data: []
             });
         }

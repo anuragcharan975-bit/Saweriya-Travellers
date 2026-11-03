@@ -130,6 +130,19 @@ const HeroSection = () => {
         return;
       }
 
+      // If multiple routes match (e.g. typing 's' or 'd' matching several destinations), take user to Search page to see all
+      if (results.length > 1) {
+        navigate(`/search?from=${encodeURIComponent(srcVal)}&to=${encodeURIComponent(dstVal)}${date ? `&date=${date}` : ""}`, {
+          state: {
+            from: srcVal,
+            to: dstVal,
+            date: date,
+            searchResults: results,
+          },
+        });
+        return;
+      }
+
       const firstResult = results[0];
       const routeId =
         firstResult?.route?._id ||
@@ -264,8 +277,16 @@ const HeroSection = () => {
                     value={from}
                     onChange={(e) => setFrom(e.target.value)}
                     placeholder="From City (e.g., Jaipur)"
+                    list="hero-from-cities"
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 pl-14 pr-4 font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
+                  <datalist id="hero-from-cities">
+                    <option value="Jaipur" />
+                    <option value="Delhi" />
+                    <option value="Mumbai" />
+                    <option value="Bangalore" />
+                    <option value="Ahmedabad" />
+                  </datalist>
                   <span className="absolute -top-2.5 left-4 bg-white px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 rounded">
                     Departure
                   </span>
@@ -290,9 +311,23 @@ const HeroSection = () => {
                     type="text"
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
-                    placeholder="To City (e.g., Delhi)"
+                    placeholder="To City (e.g., Saweriya Seth)"
+                    list="hero-to-cities"
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 pl-14 pr-4 font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
+                  <datalist id="hero-to-cities">
+                    <option value="Saweriya Seth" />
+                    <option value="Surat" />
+                    <option value="Delhi" />
+                    <option value="Jaipur" />
+                    <option value="Goa" />
+                    <option value="Pune" />
+                    <option value="Bhopal" />
+                    <option value="Udaipur" />
+                    <option value="Ajmer" />
+                    <option value="Bikaner" />
+                    <option value="Dehradun" />
+                  </datalist>
                   <span className="absolute -top-2.5 left-4 bg-white px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 rounded">
                     Destination
                   </span>

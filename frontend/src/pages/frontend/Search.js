@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Header from "./Header";
 import Footer from "./Footer";
@@ -10,6 +10,7 @@ import { ViewAllRoute } from "../../Service/admin/Route";
 export default function Search() {
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -23,11 +24,63 @@ export default function Search() {
 
 
   // =====================================================
-  // PAGE OPEN HOTE HI SAARE ROUTES LOAD KARO
+  // PAGE LOAD: CHECK STATE / QUERY PARAMS / ALL ROUTES
   // =====================================================
 
   useEffect(() => {
 
+    // 1. If state was passed with searchResults from HeroSection
+    if (location.state?.searchResults && location.state.searchResults.length > 0) {
+      if (location.state.from) setFrom(location.state.from);
+      if (location.state.to) setTo(location.state.to);
+      if (location.state.date) setDate(location.state.date);
+      setFilteredRoutes(location.state.searchResults);
+      return;
+    }
+
+    // 2. Check query params (?from=...&to=...&date=...)
+    const params = new URLSearchParams(location.search);
+    const qFrom = params.get("from");
+    const qTo = params.get("to");
+    const qDate = params.get("date");
+
+    if (qFrom || qTo) {
+      if (qFrom) setFrom(qFrom);
+      if (qTo) setTo(qTo);
+      if (qDate) setDate(qDate);
+
+      const doParamSearch = async () => {
+        try {
+          setLoading(true);
+          setError("");
+          const data = await SearchSchedule({
+            ...(qFrom ? { source_city: qFrom.trim().toLowerCase() } : {}),
+            ...(qTo ? { distance_city: qTo.trim().toLowerCase() } : {}),
+            ...(qDate ? { trip_date: qDate } : {})
+          });
+
+          let result = [];
+          if (Array.isArray(data)) result = data;
+          else if (Array.isArray(data?.data)) result = data.data;
+          else if (Array.isArray(data?.data?.data)) result = data.data.data;
+
+          if (result.length === 0) {
+            setError("No buses found for this route.");
+          } else {
+            setFilteredRoutes(result);
+          }
+        } catch (err) {
+          setError(err?.response?.data?.message || "No buses found for this route.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      doParamSearch();
+      return;
+    }
+
+    // 3. Default: Load all routes
     const getAllRoutes = async () => {
 
       try {
@@ -83,7 +136,7 @@ export default function Search() {
 
     getAllRoutes();
 
-  }, []);
+  }, [location.search, location.state]);
 
 
   // =====================================================
@@ -96,26 +149,7 @@ export default function Search() {
 
     setError("");
 
-    /*
-      Agar From aur To dono empty hain,
-      to saari routes already show ho rahi hain.
-    */
-
     if (!from.trim() && !to.trim()) {
-
-      return;
-
-    }
-
-    /*
-      Agar sirf From ya sirf To dala hai
-    */
-
-    if (!from.trim() || !to.trim()) {
-
-      setError(
-        "Please enter both From and To city."
-      );
 
       return;
 
@@ -126,17 +160,9 @@ export default function Search() {
       setLoading(true);
 
       const searchData = {
-
-        source_city:
-          from.trim().toLowerCase(),
-
-        distance_city:
-          to.trim().toLowerCase(),
-
-        ...(date
-          ? { trip_date: date }
-          : {}),
-
+        ...(from.trim() ? { source_city: from.trim().toLowerCase() } : {}),
+        ...(to.trim() ? { distance_city: to.trim().toLowerCase() } : {}),
+        ...(date ? { trip_date: date } : {}),
       };
 
 
@@ -407,9 +433,17 @@ export default function Search() {
                       onChange={(e) =>
                         setFrom(e.target.value)
                       }
-                      placeholder="Enter source city"
+                      placeholder="Enter source city (e.g., Jaipur)"
+                      list="search-from-cities"
                       className="w-full h-14 px-4 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
                     />
+                    <datalist id="search-from-cities">
+                      <option value="Jaipur" />
+                      <option value="Delhi" />
+                      <option value="Mumbai" />
+                      <option value="Bangalore" />
+                      <option value="Ahmedabad" />
+                    </datalist>
 
                   </div>
 
@@ -433,9 +467,23 @@ export default function Search() {
                       onChange={(e) =>
                         setTo(e.target.value)
                       }
-                      placeholder="Enter destination city"
+                      placeholder="Enter destination city (e.g., Saweriya Seth)"
+                      list="search-to-cities"
                       className="w-full h-14 px-4 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
                     />
+                    <datalist id="search-to-cities">
+                      <option value="Saweriya Seth" />
+                      <option value="Surat" />
+                      <option value="Delhi" />
+                      <option value="Jaipur" />
+                      <option value="Goa" />
+                      <option value="Pune" />
+                      <option value="Bhopal" />
+                      <option value="Udaipur" />
+                      <option value="Ajmer" />
+                      <option value="Bikaner" />
+                      <option value="Dehradun" />
+                    </datalist>
 
                   </div>
 

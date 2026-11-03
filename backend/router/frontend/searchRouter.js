@@ -9,6 +9,7 @@ const validate = require("../../middleware/validate")
 
 
 searchRouter.get("/search", controller.searchBus);
+searchRouter.post("/search", controller.searchBus);
 
 searchRouter.get("/date", controller.searchByDate);
 
