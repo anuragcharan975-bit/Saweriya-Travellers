@@ -57,15 +57,34 @@ export const DEFAULT_FALLBACK_IMAGE = jaipurImg;
 export const getRouteImage = (cityOrRoute) => {
   if (!cityOrRoute) return DEFAULT_FALLBACK_IMAGE;
 
-  const targetStr =
-    typeof cityOrRoute === "object"
-      ? `${cityOrRoute.distance_city || ""} ${cityOrRoute.route_name || ""} ${cityOrRoute.source_city || ""}`
-      : String(cityOrRoute);
+  // Always determine key strictly based on the DESTINATION (distance_city)
+  let key = "";
+  if (typeof cityOrRoute === "object") {
+    // 1. Check distance_city (Destination) FIRST
+    key = String(cityOrRoute.distance_city || "").trim().toLowerCase();
 
-  const key = targetStr.trim().toLowerCase();
+    // 2. If distance_city is missing, parse destination from route_name (e.g. "Jaipur-Delhi" -> "delhi")
+    if (!key && cityOrRoute.route_name) {
+      const parts = cityOrRoute.route_name.split(/[-–—]/);
+      if (parts.length > 1) {
+        key = parts[1].trim().toLowerCase();
+      } else {
+        key = cityOrRoute.route_name.trim().toLowerCase();
+      }
+    }
 
+    // 3. Fallback to source_city only if no destination info exists
+    if (!key && cityOrRoute.source_city) {
+      key = String(cityOrRoute.source_city).trim().toLowerCase();
+    }
+  } else {
+    key = String(cityOrRoute).trim().toLowerCase();
+  }
+
+  // Exact Destination Matching
   if (/saw|seth|sanw/i.test(key)) return DESTINATION_IMAGES.saweriya;
   if (/salasar/i.test(key)) return DESTINATION_IMAGES.salasar;
+  if (/jaipur/i.test(key)) return DESTINATION_IMAGES.jaipur;
   if (/delhi/i.test(key)) return DESTINATION_IMAGES.delhi;
   if (/udaipur/i.test(key)) return DESTINATION_IMAGES.udaipur;
   if (/ajmer/i.test(key)) return DESTINATION_IMAGES.ajmer;
@@ -78,7 +97,6 @@ export const getRouteImage = (cityOrRoute) => {
   if (/ahmedabad/i.test(key)) return DESTINATION_IMAGES.ahmedabad;
   if (/bangalore|bengaluru/i.test(key)) return DESTINATION_IMAGES.bangalore;
   if (/bhopal/i.test(key)) return DESTINATION_IMAGES.bhopal;
-  if (/jaipur/i.test(key)) return DESTINATION_IMAGES.jaipur;
 
   return DEFAULT_FALLBACK_IMAGE;
 };
