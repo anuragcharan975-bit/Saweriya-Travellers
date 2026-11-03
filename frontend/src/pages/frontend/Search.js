@@ -473,6 +473,7 @@ export default function Search() {
                       className="w-full h-14 px-4 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
                     />
                     <datalist id="search-to-cities">
+                      <option value="Salasar" />
                       <option value="Saweriya Seth" />
                       <option value="Surat" />
                       <option value="Delhi" />

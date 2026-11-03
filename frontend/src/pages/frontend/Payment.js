@@ -154,6 +154,17 @@ export default function Payment() {
         backendBooking = res?.data?.data || res?.data || res;
       } catch (apiErr) {
         console.warn("Backend booking API note:", apiErr?.response?.data || apiErr);
+        const errorMsg =
+          apiErr?.response?.data?.message ||
+          "Unable to complete booking. Please verify seats and travel timing.";
+        setProcessing(false);
+        Swal.fire({
+          icon: "error",
+          title: "Booking Failed",
+          text: errorMsg,
+          confirmButtonColor: "#f97316",
+        });
+        return;
       }
 
       // 2. Prepare comprehensive paid booking record

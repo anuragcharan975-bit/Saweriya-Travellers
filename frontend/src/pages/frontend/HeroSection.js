@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { SearchSchedule } from "../../Service/admin/Schedule";
+import { ViewRouteDropdown } from "../../Service/admin/Route";
 import { ViewAllBus } from "../../Service/admin/Bus";
 
 const HeroSection = () => {
@@ -24,9 +25,13 @@ const HeroSection = () => {
   const [backgroundImages, setBackgroundImages] = useState([]);
   const [currentImage, setCurrentImage] = useState(0);
 
-  const [from, setFrom] = useState("");
+    const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
+
+  const [allRoutes, setAllRoutes] = useState([]);
+  const [showFromDropdown, setShowFromDropdown] = useState(false);
+  const [showToDropdown, setShowToDropdown] = useState(false);
 
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -90,6 +95,24 @@ const HeroSection = () => {
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
 
+    // ==========================================
+  // FETCH ALL ROUTES FOR LIVE AUTOCOMPLETE
+  // ==========================================
+  useEffect(() => {
+    const fetchLiveRoutes = async () => {
+      try {
+        const res = await ViewRouteDropdown();
+        const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+        if (list.length > 0) {
+          setAllRoutes(list);
+        }
+      } catch (err) {
+        console.log("Autocomplete routes note:", err);
+      }
+    };
+    fetchLiveRoutes();
+  }, []);
+
   // ==========================================
   // SEARCH BUS
   // ==========================================
@@ -130,16 +153,34 @@ const HeroSection = () => {
         return;
       }
 
-      // Prioritize Saweriya Seth when searching 'sa', 'sawriya', etc.
-      let firstResult = results[0];
-      const saweriyaMatch = results.find(
-        (r) =>
-          /saw|seth|sanw/i.test(r?.route?.distance_city || "") ||
-          /saw|seth|sanw/i.test(r?.route?.route_name || "")
+            // If multiple distinct routes match (e.g. 'sa' matches both Saweriya Seth & Salasar, or 's' matches 3 routes)
+      const distinctRouteIds = Array.from(
+        new Set(
+          results
+            .map((r) => r?.route?._id || r?.route_id || r?._id)
+            .filter(Boolean)
+        )
       );
-      if (saweriyaMatch && (/^sa/i.test(dstVal) || /saw|seth/i.test(dstVal))) {
-        firstResult = saweriyaMatch;
+
+      if (distinctRouteIds.length > 1) {
+        navigate(
+          `/search?from=${encodeURIComponent(srcVal)}&to=${encodeURIComponent(dstVal)}${
+            date ? `&date=${encodeURIComponent(date)}` : ""
+          }`,
+          {
+            state: {
+              from: srcVal,
+              to: dstVal,
+              date: date,
+              searchResults: results,
+              searchData: searchData,
+            },
+          }
+        );
+        return;
       }
+
+      const firstResult = results[0];
 
       const routeId =
         firstResult?.route?._id ||
@@ -273,9 +314,16 @@ const HeroSection = () => {
                   <input
                     type="text"
                     value={from}
-                    onChange={(e) => setFrom(e.target.value)}
+                    onChange={(e) => {
+                      setFrom(e.target.value);
+                      setShowFromDropdown(true);
+                      setSearchError("");
+                    }}
+                    onFocus={() => setShowFromDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
                     placeholder="From City (e.g., Jaipur)"
                     list="hero-from-cities"
+                    autoComplete="off"
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 pl-14 pr-4 font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
                   <datalist id="hero-from-cities">
@@ -288,6 +336,34 @@ const HeroSection = () => {
                   <span className="absolute -top-2.5 left-4 bg-white px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 rounded">
                     Departure
                   </span>
+
+                  {/* Custom From Suggestions Dropdown */}
+                  {showFromDropdown && (
+                    <div
+                      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 max-h-60 overflow-y-auto divide-y divide-slate-100"
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50">
+                        Select Departure City
+                      </div>
+                      {["Jaipur", "Delhi", "Mumbai", "Bangalore", "Ahmedabad"]
+                        .filter((c) => !from.trim() || c.toLowerCase().includes(from.trim().toLowerCase()))
+                        .map((city, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setFrom(city);
+                              setShowFromDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-orange-50 text-slate-800 hover:text-orange-600 font-semibold text-sm transition-colors flex items-center gap-2"
+                          >
+                            <MapPin size={14} className="text-orange-500 shrink-0" />
+                            <span>{city}</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* SWAP BUTTON */}
@@ -308,12 +384,20 @@ const HeroSection = () => {
                   <input
                     type="text"
                     value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    placeholder="To City (e.g., Saweriya Seth)"
+                    onChange={(e) => {
+                      setTo(e.target.value);
+                      setShowToDropdown(true);
+                      setSearchError("");
+                    }}
+                    onFocus={() => setShowToDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
+                    placeholder="To City (e.g., Salasar, Saweriya)"
                     list="hero-to-cities"
+                    autoComplete="off"
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 pl-14 pr-4 font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                   />
                   <datalist id="hero-to-cities">
+                    <option value="Salasar" />
                     <option value="Saweriya Seth" />
                     <option value="Surat" />
                     <option value="Delhi" />
@@ -325,10 +409,93 @@ const HeroSection = () => {
                     <option value="Ajmer" />
                     <option value="Bikaner" />
                     <option value="Dehradun" />
+                    <option value="Mumbai" />
+                    <option value="Bangalore" />
+                    <option value="Ahmedabad" />
                   </datalist>
                   <span className="absolute -top-2.5 left-4 bg-white px-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 rounded">
                     Destination
                   </span>
+
+                  {/* Custom Smart To Suggestions Dropdown */}
+                  {showToDropdown && (
+                    <div
+                      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 max-h-72 overflow-y-auto divide-y divide-slate-100"
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 flex items-center justify-between">
+                        <span>Available Destinations</span>
+                        <span className="text-[10px] text-orange-600 font-bold">Live Routes</span>
+                      </div>
+                      {(allRoutes.length > 0
+                        ? Array.from(
+                            new Map(
+                              allRoutes.map((r) => [
+                                (r.distance_city || "").toLowerCase(),
+                                {
+                                  city: r.distance_city,
+                                  desc: `${r.distance || "Direct"} • ${r.duration || "Express"} • ₹${r.fare || 500}`,
+                                },
+                              ])
+                            ).values()
+                          )
+                        : [
+                            { city: "Salasar", desc: "170 km • Daily Balaji Express • ₹230" },
+                            { city: "Saweriya Seth", desc: "390 km • Saweriya Dham Special • ₹600" },
+                            { city: "Surat", desc: "930 km • Diamond City Sleeper • ₹1200" },
+                            { city: "Delhi", desc: "280 km • Capital Expressway • ₹450" },
+                            { city: "Dehradun", desc: "540 km • Hill Valley Express • ₹850" },
+                            { city: "Bhopal", desc: "600 km • Central Highway Superfast • ₹950" },
+                            { city: "Ajmer", desc: "135 km • Dargah Sharif Express • ₹200" },
+                            { city: "Udaipur", desc: "410 km • Lake City Cruiser • ₹650" },
+                            { city: "Bikaner", desc: "330 km • Desert Royal Express • ₹500" },
+                            { city: "Goa", desc: "1750 km • Coastal Luxury Sleeper • ₹2200" },
+                            { city: "Pune", desc: "150 km • Deccan Expressway • ₹350" },
+                          ]
+                      )
+                        .filter((item) => {
+                          const q = to.trim().toLowerCase();
+                          if (!q) return true;
+                          const c = item.city.toLowerCase();
+                          if (c.startsWith(q)) return true;
+                          if (c.includes(q)) return true;
+                          // Handle sawriya / sawariya typo
+                          if (/saw|seth|sanw/i.test(q) && /saw|seth/i.test(c)) return true;
+                          // Handle salasar typo
+                          if (/sal|sala/i.test(q) && /sala/i.test(c)) return true;
+                          return false;
+                        })
+                        .map((dest, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setTo(dest.city);
+                              setShowToDropdown(false);
+                              setSearchError("");
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-orange-50/80 transition-colors flex items-center justify-between group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-orange-100/70 text-orange-600 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                                <MapPin size={16} />
+                              </div>
+                              <div>
+                                <div className="font-extrabold text-slate-900 text-sm group-hover:text-orange-600 transition-colors">
+                                  {dest.city}
+                                </div>
+                                <div className="text-[11px] text-slate-400">
+                                  {dest.desc}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-xs font-semibold text-slate-400 group-hover:text-orange-600">
+                              Select →
+                            </span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* DATE */}

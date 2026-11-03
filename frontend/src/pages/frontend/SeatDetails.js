@@ -91,6 +91,7 @@ export default function BusSeat() {
   const [seatGenders, setSeatGenders] = useState({});
   const [bookedSeats, setBookedSeats] = useState([]);
   const [isTripCompleted, setIsTripCompleted] = useState(false);
+  const [isDeparted, setIsDeparted] = useState(false);
 
   // ==========================================
   // DISTANCE & 450+ KM CATERING CALCULATION
@@ -213,9 +214,11 @@ export default function BusSeat() {
             if (res.isCompleted) {
               setBookedSeats([]);
               setIsTripCompleted(true);
+              setIsDeparted(false);
             } else {
               setBookedSeats(res.bookedSeats || []);
               setIsTripCompleted(false);
+              setIsDeparted(Boolean(res.isDeparted));
             }
           }
         })
@@ -266,6 +269,15 @@ export default function BusSeat() {
 
   // Handle seat clicks
   const handleSeat = (seat) => {
+    if (isDeparted) {
+      Swal.fire({
+        icon: "warning",
+        title: "Bus Departed",
+        text: `This bus departed at ${bus?.departure_time || "scheduled time"}. Bookings for this trip are closed.`,
+        confirmButtonColor: "#f97316",
+      });
+      return;
+    }
     if (bookedSeats.includes(seat)) return;
 
     if (selected.includes(seat)) {
@@ -370,6 +382,15 @@ export default function BusSeat() {
   };
 
   const handleProceed = () => {
+    if (isDeparted) {
+      Swal.fire({
+        icon: "error",
+        title: "Bus Has Departed",
+        text: `Bus departed at ${bus?.departure_time || "scheduled departure time"}. You cannot book tickets for a departed bus. Please choose an upcoming trip.`,
+        confirmButtonColor: "#f97316",
+      });
+      return;
+    }
     if (selected.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -653,6 +674,28 @@ export default function BusSeat() {
                 </div>
               </div>
             </div>
+
+            {/* BUS DEPARTED WARNING NOTICE */}
+            {isDeparted && (
+              <div className="mb-6 p-4 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-300 flex items-center justify-between gap-4 animate-fade-in shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-amber-400">
+                      Bus Departed at {bus?.departure_time || "Scheduled Time"} — Booking Closed
+                    </h4>
+                    <p className="text-xs opacity-90 mt-0.5 text-amber-200/90">
+                      This bus has already departed for this journey. Seats can only be booked before departure. Once this bus completes its route, all seats will be automatically freed!
+                    </p>
+                  </div>
+                </div>
+                <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs uppercase tracking-wider border border-amber-500/30">
+                  Departed
+                </span>
+              </div>
+            )}
 
             {/* TRIP COMPLETED / SEATS RESET NOTICE */}
             {isTripCompleted && (
@@ -1809,7 +1852,7 @@ export default function BusSeat() {
                   <button
                     type="button"
                     onClick={handleProceed}
-                    disabled={selected.length === 0}
+                    disabled={selected.length === 0 || isDeparted}
                     className={`
                       w-full mt-6 py-4 rounded-2xl font-black text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-98
                       ${
@@ -1823,7 +1866,9 @@ export default function BusSeat() {
                   >
                     <CreditCard size={18} />
                     <span>
-                      {selected.length === 0
+                      {isDeparted
+                        ? "Bus Departed • Booking Closed"
+                        : selected.length === 0
                         ? "Select Seats to Proceed"
                         : isCoupleMode
                         ? `Proceed with Couple Privilege ₹${grandTotal}`

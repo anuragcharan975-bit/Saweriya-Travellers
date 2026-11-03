@@ -189,6 +189,25 @@ const createBooking = async (req, res) => {
         if (!arrival) arrival = "05:00 AM";
         if (!journey_date) journey_date = new Date();
 
+                // 5.5 Check departure time cutoff (cannot book after bus departs on selected travel date)
+        if (journey_date && departure) {
+            try {
+                const depDateTime = getDepartureDateTime({
+                    trip_date: journey_date,
+                    departure_time: departure
+                });
+                const now = new Date();
+                if (now.getTime() >= depDateTime.getTime()) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Booking closed. This bus departed at ${departure} on ${new Date(journey_date).toLocaleDateString()}. Tickets must be booked before departure.`
+                    });
+                }
+            } catch (depErr) {
+                console.log("Departure cutoff check note:", depErr.message);
+            }
+        }
+
         // 6. Check existing booked seats if schedule is linked (for same journey date)
         if (validScheduleId && journey_date) {
             try {
@@ -497,6 +516,21 @@ function parseDurationMinutes(durationStr) {
     return totalMinutes;
 }
 
+function getDepartureDateTime({ trip_date, departure_time }) {
+    let baseDate = trip_date ? new Date(trip_date) : new Date();
+    if (isNaN(baseDate.getTime())) baseDate = new Date();
+    const startOfDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 0, 0, 0, 0);
+
+    const dep = parseTime(departure_time);
+    let depDateTime = new Date(startOfDay);
+    if (dep) {
+        depDateTime.setHours(dep.hours, dep.minutes, 0, 0);
+    } else {
+        depDateTime.setHours(21, 0, 0, 0);
+    }
+    return depDateTime;
+}
+
 function getTripEndDateTime({ trip_date, departure_time, arrival_time, duration }) {
     let baseDate = trip_date ? new Date(trip_date) : new Date();
     if (isNaN(baseDate.getTime())) baseDate = new Date();
@@ -557,6 +591,11 @@ const getBookedSeats = async (req, res) => {
         const arrivalTime = schedule?.arrival_time || "05:00 AM";
         const duration = route?.duration || "8 Hours";
 
+        const depDateTime = getDepartureDateTime({
+            trip_date: journeyDateStr,
+            departure_time: departureTime
+        });
+
         const tripEndDateTime = getTripEndDateTime({
             trip_date: journeyDateStr,
             departure_time: departureTime,
@@ -565,6 +604,7 @@ const getBookedSeats = async (req, res) => {
         });
 
         const now = new Date();
+        const isDeparted = now.getTime() >= depDateTime.getTime();
         const isJourneyCompleted = now.getTime() >= tripEndDateTime.getTime();
 
         // If journey time is over (bus reached destination), free up all seats!
@@ -589,6 +629,9 @@ const getBookedSeats = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 isCompleted: true,
+                isDeparted: true,
+                departureTime,
+                arrivalTime,
                 message: "Bus journey has completed its travel time. All seats are now free.",
                 bookedSeats: [],
                 tripEndDateTime,
@@ -626,6 +669,9 @@ const getBookedSeats = async (req, res) => {
         return res.status(200).json({
             success: true,
             isCompleted: false,
+            isDeparted: isDeparted,
+            departureTime,
+            arrivalTime,
             bookedSeats: activeBookedSeats,
             tripEndDateTime,
             currentTime: now
@@ -645,5 +691,6 @@ module.exports = {
     bookingHistory,
     cancelBooking,
     getBookedSeats,
-    getTripEndDateTime
+    getTripEndDateTime,
+    getDepartureDateTime
 };
