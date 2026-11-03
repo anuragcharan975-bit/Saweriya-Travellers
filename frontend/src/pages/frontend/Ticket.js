@@ -15,6 +15,7 @@ import {
   User,
   CreditCard,
   QrCode,
+  Utensils,
 } from "lucide-react";
 
 export default function Ticket() {
@@ -374,9 +375,15 @@ export default function Ticket() {
                 <p className="text-base sm:text-lg font-black text-violet-700">
                   {seats}
                 </p>
-                <span className="text-[11px] text-violet-600/80 font-medium">
-                  {booking.genderSummary ? `${booking.genderSummary} • Confirmed` : "Reserved & Confirmed"}
-                </span>
+                <div className="text-[11px] text-violet-700/90 font-semibold mt-0.5 flex flex-wrap gap-1">
+                  {booking.seatTypes && typeof booking.seatTypes === "object"
+                    ? Object.entries(booking.seatTypes).map(([st, type]) => (
+                        <span key={st} className="px-1.5 py-0.5 bg-violet-100 rounded text-[10px]">
+                          {st}: {type === "Sleeper" ? "🛏️ Sleeper" : "💺 Seater"}
+                        </span>
+                      ))
+                    : (booking.genderSummary ? `${booking.genderSummary} • Confirmed` : "Reserved & Confirmed")}
+                </div>
               </div>
 
               {/* Total Fare */}
@@ -406,6 +413,38 @@ export default function Ticket() {
                 </span>
               </div>
             </div>
+
+            {/* HIGHWAY CATERING & MEAL VOUCHER (450+ KM ROUTE) */}
+            {Array.isArray(booking.addons) && booking.addons.length > 0 && (
+              <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-200">
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-orange-200/60">
+                  <div className="flex items-center gap-2">
+                    <Utensils size={16} className="text-orange-600" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      Highway Catering & Refreshment Voucher
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-600 text-white">
+                    Pre-Paid Included
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {booking.addons.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-orange-200/80 shadow-2xs text-slate-800 font-semibold"
+                    >
+                      <span className="text-sm">{item.icon || "🍽️"}</span>
+                      <span>{item.count} × {item.name}</span>
+                      <span className="text-[10px] text-orange-600 font-bold">(₹{item.total})</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-2 font-medium">
+                  Show this digital voucher to the bus food coordinator during the highway stop.
+                </p>
+              </div>
+            )}
 
             {/* BARCODE & SCAN SECTION */}
             <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/60 p-4 rounded-2xl">

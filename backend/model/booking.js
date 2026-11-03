@@ -33,6 +33,37 @@ const bookingSchema = new mongoose.Schema(
             required: true
         },
 
+        seat_types: {
+            type: mongoose.Schema.Types.Mixed,
+            default: {}
+        },
+
+        // ==========================================
+        // CATERING & TRAVEL ADDONS (450+ KM ROUTES)
+        // ==========================================
+        addons: {
+            type: [
+                {
+                    id: String,
+                    name: String,
+                    count: Number,
+                    price: Number,
+                    total: Number
+                }
+            ],
+            default: []
+        },
+
+        addons_amount: {
+            type: Number,
+            default: 0
+        },
+
+        distance: {
+            type: String,
+            default: ""
+        },
+
         // ==========================================
         // TOTAL AMOUNT
         // ==========================================

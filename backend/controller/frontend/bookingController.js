@@ -73,6 +73,11 @@ const createBooking = async (req, res) => {
         let arrival = req.body.arrival || req.body.arrival_time || "";
         let journey_date = req.body.journey_date || req.body.journeyDate || null;
 
+        const seat_types = req.body.seat_types || req.body.seatTypes || {};
+        const addons = Array.isArray(req.body.addons) ? req.body.addons : [];
+        const addons_amount = Number(req.body.addons_amount ?? req.body.addonsAmount ?? 0);
+        let distance = req.body.distance || "";
+
         // 3. Seats check
         if (!rawSeats || (Array.isArray(rawSeats) && rawSeats.length === 0)) {
             return res.status(400).json({
@@ -134,6 +139,9 @@ const createBooking = async (req, res) => {
                         }
                         if (!distance_city) {
                             distance_city = foundSchedule.route.distance_city;
+                        }
+                        if (!distance && foundSchedule.route.distance) {
+                            distance = foundSchedule.route.distance;
                         }
                     }
 
@@ -223,6 +231,10 @@ const createBooking = async (req, res) => {
             user_email: userEmail || "",
             schedule_id: validScheduleId,
             seat_number: selectedSeats,
+            seat_types: seat_types,
+            addons: addons,
+            addons_amount: addons_amount,
+            distance: distance,
             total_amount: parsedAmount,
             booking_status: "Booked",
             bus_name: bus_name,

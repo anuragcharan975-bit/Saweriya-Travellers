@@ -516,15 +516,33 @@ export default function MyBookings() {
                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Booked Seats ({seatsCount})</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                          {seatsStr.split(",").map((s, sIdx) => (
-                            <span
-                              key={sIdx}
-                              className="px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 font-black text-xs border border-orange-200"
-                            >
-                              Seat {s.trim()}
-                            </span>
-                          ))}
+                          {seatsStr.split(",").map((s, sIdx) => {
+                            const trimmed = s.trim();
+                            const type = b.seatTypes?.[trimmed] || b.seat_types?.[trimmed];
+                            return (
+                              <span
+                                key={sIdx}
+                                className={`px-2.5 py-1 rounded-lg font-black text-xs border ${
+                                  type === "Sleeper"
+                                    ? "bg-purple-100 text-purple-700 border-purple-200"
+                                    : "bg-orange-100 text-orange-700 border-orange-200"
+                                }`}
+                              >
+                                Seat {trimmed} {type ? `(${type})` : ""}
+                              </span>
+                            );
+                          })}
                         </div>
+                        {Array.isArray(b.addons) && b.addons.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center gap-1.5 flex-wrap text-[11px] text-slate-700 font-semibold">
+                            <span className="text-[10px] text-orange-600 font-bold uppercase">Catering:</span>
+                            {b.addons.map((a, ai) => (
+                              <span key={ai} className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
+                                {a.count}× {a.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {b.genderSummary && (
                           <p className="text-[11px] text-slate-500 font-medium mt-1.5">{b.genderSummary}</p>
                         )}

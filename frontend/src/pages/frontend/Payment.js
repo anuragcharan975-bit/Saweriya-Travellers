@@ -128,6 +128,10 @@ export default function Payment() {
           scheduleId: booking.scheduleId || booking.busId,
           seat_number: booking.seats || booking.seat_number,
           seats: booking.seats || booking.seat_number,
+          seat_types: booking.seatTypes || booking.seat_types || {},
+          addons: booking.addons || [],
+          addons_amount: booking.addonsTotal || booking.addons_amount || 0,
+          distance: booking.distance || "",
           total_amount: booking.total || booking.total_amount,
           bus_name: booking.busName || booking.bus_name || "Volvo AC Luxury Coach",
           register_number: booking.registerNumber || booking.register_number || "RJ45SK0000",
@@ -174,6 +178,17 @@ export default function Payment() {
         seats: booking.seats || booking.seat_number,
         seat_number: booking.seats || booking.seat_number,
         seatGenders: booking.seatGenders || {},
+        seatTypes: booking.seatTypes || booking.seat_types || {},
+        seat_types: booking.seatTypes || booking.seat_types || {},
+        seaterCount: booking.seaterCount || 0,
+        sleeperCount: booking.sleeperCount || 0,
+        seaterFare: booking.seaterFare || booking.fare,
+        sleeperFare: booking.sleeperFare || booking.fare,
+        seatsTotal: booking.seatsTotal || (booking.fare * (booking.passengers || 1)),
+        addons: booking.addons || [],
+        addons_amount: booking.addonsTotal || booking.addons_amount || 0,
+        addonsTotal: booking.addonsTotal || booking.addons_amount || 0,
+        distance: booking.distance || "",
         maleCount: booking.maleCount ?? 0,
         femaleCount: booking.femaleCount ?? 0,
         genderSummary: booking.genderSummary || "",
@@ -785,14 +800,46 @@ export default function Payment() {
 
                   {/* Price Breakdown */}
                   <div className="space-y-2 mb-6 text-xs text-slate-500">
-                    <div className="flex justify-between">
-                      <span>Seat Fare ({booking.passengers} × ₹{booking.fare})</span>
-                      <span className="font-semibold text-slate-700">₹{booking.total}</span>
-                    </div>
-                    <div className="flex justify-between">
+                    {booking.seaterCount > 0 && (
+                      <div className="flex justify-between">
+                        <span>Lower Seater ({booking.seaterCount} × ₹{booking.seaterFare})</span>
+                        <span className="font-semibold text-slate-700">₹{booking.seaterCount * booking.seaterFare}</span>
+                      </div>
+                    )}
+
+                    {booking.sleeperCount > 0 && (
+                      <div className="flex justify-between">
+                        <span>Upper Sleeper ({booking.sleeperCount} × ₹{booking.sleeperFare})</span>
+                        <span className="font-semibold text-slate-700">₹{booking.sleeperCount * booking.sleeperFare}</span>
+                      </div>
+                    )}
+
+                    {!booking.seaterCount && !booking.sleeperCount && (
+                      <div className="flex justify-between">
+                        <span>Seat Fare ({booking.passengers} × ₹{booking.fare})</span>
+                        <span className="font-semibold text-slate-700">₹{booking.seatsTotal || booking.total}</span>
+                      </div>
+                    )}
+
+                    {Array.isArray(booking.addons) && booking.addons.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 block">
+                          Highway Catering & Add-ons (450+ KM):
+                        </span>
+                        {booking.addons.map((a, i) => (
+                          <div key={i} className="flex justify-between text-slate-700 pl-1 font-medium">
+                            <span>{a.icon || "🍽️"} {a.count} × {a.name}</span>
+                            <span>+₹{a.total}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between pt-1">
                       <span>Service Tax / GST</span>
                       <span className="text-emerald-600 font-bold">FREE (₹0)</span>
                     </div>
+
                     <div className="flex justify-between text-base font-black text-slate-900 pt-3 border-t border-slate-100">
                       <span>Total Amount Payable</span>
                       <span className="text-2xl text-orange-600 font-black">
