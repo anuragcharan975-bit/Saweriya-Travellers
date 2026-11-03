@@ -1,51 +1,66 @@
 /**
- * Curated high-resolution verified destination & route images
- * All images verified HTTP 200 image/jpeg
+ * Verified Authentic Destination Landmarks
+ * Bundled locally for instant loading and 100% exact landmark matching:
+ * - Saweriya Seth: Mandphiya Temple (Chittorgarh)
+ * - Salasar: Salasar Balaji Dham
+ * - Jaipur: Hawa Mahal
+ * - Delhi: India Gate
+ * - Udaipur: Lake Pichola & City Palace
+ * - Ajmer: Ajmer Sharif Dargah
+ * - Bikaner: Junagarh Fort
+ * - Dehradun: Doon Valley & Mussoorie Foothills
+ * - Goa: Calangute Beach & Palms
+ * - Mumbai: Gateway of India
+ * - Pune: Shaniwar Wada
+ * - Surat: Surat Skyline & Tapi Riverfront
+ * - Ahmedabad: Sabarmati Riverfront
+ * - Bangalore: Vidhana Soudha
+ * - Bhopal: Upper Lake (Bhojtal)
  */
 
+import saweriyaImg from "../assets/destinations/saweriya.jpg";
+import salasarImg from "../assets/destinations/salasar.jpg";
+import jaipurImg from "../assets/destinations/jaipur.jpg";
+import delhiImg from "../assets/destinations/delhi.jpg";
+import udaipurImg from "../assets/destinations/udaipur.jpg";
+import ajmerImg from "../assets/destinations/ajmer.jpg";
+import bikanerImg from "../assets/destinations/bikaner.jpg";
+import dehradunImg from "../assets/destinations/dehradun.jpg";
+import goaImg from "../assets/destinations/goa.jpg";
+import mumbaiImg from "../assets/destinations/mumbai.jpg";
+import puneImg from "../assets/destinations/pune.jpg";
+import suratImg from "../assets/destinations/surat.jpg";
+import ahmedabadImg from "../assets/destinations/ahmedabad.jpg";
+import bangaloreImg from "../assets/destinations/bangalore.jpg";
+import bhopalImg from "../assets/destinations/bhopal.jpg";
+
 export const DESTINATION_IMAGES = {
-  saweriya:
-    "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=900&q=80",
-  jaipur:
-    "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=900&q=80",
-  delhi:
-    "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=900&q=80",
-  udaipur:
-    "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=900&q=80",
-  ajmer:
-    "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=900&q=80",
-  bikaner:
-    "https://images.unsplash.com/photo-1579273166152-d725a4e2b755?auto=format&fit=crop&w=900&q=80",
-  salasar:
-    "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=900&q=80",
-  dehradun:
-    "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=900&q=80",
-  goa:
-    "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=900&q=80",
-  mumbai:
-    "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=80",
-  pune:
-    "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=900&q=80",
-  surat:
-    "https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=900&q=80",
-  ahmedabad:
-    "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=900&q=80",
-  bangalore:
-    "https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?auto=format&fit=crop&w=900&q=80",
-  bhopal:
-    "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=900&q=80",
+  saweriya: saweriyaImg,
+  salasar: salasarImg,
+  jaipur: jaipurImg,
+  delhi: delhiImg,
+  udaipur: udaipurImg,
+  ajmer: ajmerImg,
+  bikaner: bikanerImg,
+  dehradun: dehradunImg,
+  goa: goaImg,
+  mumbai: mumbaiImg,
+  pune: puneImg,
+  surat: suratImg,
+  ahmedabad: ahmedabadImg,
+  bangalore: bangaloreImg,
+  bhopal: bhopalImg,
 };
 
-export const DEFAULT_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=900&q=80";
+export const DEFAULT_FALLBACK_IMAGE = jaipurImg;
 
 export const getRouteImage = (cityOrRoute) => {
   if (!cityOrRoute) return DEFAULT_FALLBACK_IMAGE;
 
-  // If it's a route object
-  const targetStr = typeof cityOrRoute === "object"
-    ? `${cityOrRoute.distance_city || ""} ${cityOrRoute.route_name || ""} ${cityOrRoute.source_city || ""}`
-    : String(cityOrRoute);
+  const targetStr =
+    typeof cityOrRoute === "object"
+      ? `${cityOrRoute.distance_city || ""} ${cityOrRoute.route_name || ""} ${cityOrRoute.source_city || ""}`
+      : String(cityOrRoute);
 
   const key = targetStr.trim().toLowerCase();
 
