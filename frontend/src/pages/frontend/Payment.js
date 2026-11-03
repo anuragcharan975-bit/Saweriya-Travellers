@@ -132,6 +132,11 @@ export default function Payment() {
           addons: booking.addons || [],
           addons_amount: booking.addonsTotal || booking.addons_amount || 0,
           distance: booking.distance || "",
+          discount_type: booking.discountType || booking.discount_type || "NONE",
+          discount_amount: booking.discountAmount || booking.discount_amount || 0,
+          discount_percent: booking.discountPercent || booking.discount_percent || 0,
+          female_verification_required: Boolean(booking.female_verification_required ?? booking.femaleVerificationRequired ?? false),
+          stand_verification_note: booking.stand_verification_note || "",
           total_amount: booking.total || booking.total_amount,
           bus_name: booking.busName || booking.bus_name || "Volvo AC Luxury Coach",
           register_number: booking.registerNumber || booking.register_number || "RJ45SK0000",
@@ -189,6 +194,16 @@ export default function Payment() {
         addons_amount: booking.addonsTotal || booking.addons_amount || 0,
         addonsTotal: booking.addonsTotal || booking.addons_amount || 0,
         distance: booking.distance || "",
+        bookingMode: booking.bookingMode || "standard",
+        discountType: booking.discountType || booking.discount_type || "NONE",
+        discount_type: booking.discountType || booking.discount_type || "NONE",
+        discountPercent: booking.discountPercent || booking.discount_percent || 0,
+        discount_percent: booking.discountPercent || booking.discount_percent || 0,
+        discountAmount: booking.discountAmount || booking.discount_amount || 0,
+        discount_amount: booking.discountAmount || booking.discount_amount || 0,
+        female_verification_required: Boolean(booking.female_verification_required ?? booking.femaleVerificationRequired ?? false),
+        femaleVerificationRequired: Boolean(booking.female_verification_required ?? booking.femaleVerificationRequired ?? false),
+        stand_verification_note: booking.stand_verification_note || "",
         maleCount: booking.maleCount ?? 0,
         femaleCount: booking.femaleCount ?? 0,
         genderSummary: booking.genderSummary || "",
@@ -835,6 +850,18 @@ export default function Payment() {
                       </div>
                     )}
 
+                    {/* Promotional Discounts */}
+                    {booking.discountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-600 font-bold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                        <span>
+                          {booking.discountType === "COUPLE"
+                            ? "💑 Couple Special (35% OFF)"
+                            : "👥 Group Saver Discount (30% OFF)"}
+                        </span>
+                        <span>-₹{booking.discountAmount}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between pt-1">
                       <span>Service Tax / GST</span>
                       <span className="text-emerald-600 font-bold">FREE (₹0)</span>
@@ -847,6 +874,18 @@ export default function Payment() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Stand-side Female Verification Alert */}
+                  {booking.female_verification_required && (
+                    <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900">
+                      <div className="font-extrabold flex items-center gap-1.5 text-rose-700">
+                        <span>⚠️ Stand-side Verification Clause:</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-relaxed text-rose-800">
+                        Female traveller presence is mandatory at the boarding point. If no female passenger is present at the stand, the 35% discount will be revoked and full regular fare must be paid directly to the station supervisor.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Pay CTA Button */}
                   <button

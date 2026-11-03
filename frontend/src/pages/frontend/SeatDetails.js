@@ -15,6 +15,10 @@ import {
   Plus,
   Minus,
   Layers,
+  Heart,
+  UserCheck,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -51,7 +55,7 @@ export default function BusSeat() {
   // Seater rate: low rate (₹450 / ₹500)
   const seaterFare = baseFare;
 
-  // Sleeper berth rate: high rate (+55% or premium luxury berth)
+  // Sleeper berth rate: high rate (+55% premium luxury berth)
   const sleeperFare = Math.round((baseFare * 1.55) / 10) * 10;
 
   const seatLetters = ["A", "B", "C", "D"];
@@ -77,6 +81,11 @@ export default function BusSeat() {
 
   // Deck filter: 'all' | 'lower' | 'upper'
   const [activeDeck, setActiveDeck] = useState("all");
+
+  // ==========================================
+  // BOOKING MODES: 'standard' | 'couple' | 'group'
+  // ==========================================
+  const [bookingMode, setBookingMode] = useState("standard");
 
   const [selected, setSelected] = useState([]);
   const [seatGenders, setSeatGenders] = useState({});
@@ -105,7 +114,7 @@ export default function BusSeat() {
   const [showAddonsManual, setShowAddonsManual] = useState(false);
   const enableAddons = isLongRoute || showAddonsManual;
 
-  // High-way Catering menu (Tea, Coffee, Dinner plate, Snacks, Mineral water)
+  // Highway Catering menu (Tea, Coffee, Dinner plate, Snacks, Mineral water)
   const CATERING_MENU = [
     {
       id: "tea",
@@ -214,7 +223,7 @@ export default function BusSeat() {
     }
   }, [id, scheduleData, location.state]);
 
-  // Calculate live male & female counts
+  // Gender counts
   const maleCount = selected.filter(
     (s) => (seatGenders[s] || "Male") === "Male"
   ).length;
@@ -226,17 +235,55 @@ export default function BusSeat() {
   const seaterSelected = selected.filter((s) => !isSleeperSeat(s));
   const sleeperSelected = selected.filter((s) => isSleeperSeat(s));
 
-  const seatsTotal = selected.reduce((sum, s) => sum + getSeatFare(s), 0);
-  const grandTotal = seatsTotal + addonsTotal;
+  // ==========================================
+  // COUPLE & GROUP DISCOUNT LOGIC
+  // ==========================================
+  const isCoupleMode = bookingMode === "couple";
+  const isGroupMode = bookingMode === "group" || selected.length >= 4;
 
+  // Strict verification criteria:
+  // Couple mode requires 1 Male & 1 Female passenger!
+  const hasFemalePassenger = femaleCount >= 1;
+  const isCoupleApproved = isCoupleMode && selected.length === 2 && hasFemalePassenger;
+
+  let discountPercent = 0;
+  let discountType = "NONE";
+
+  if (isCoupleMode) {
+    discountType = "COUPLE";
+    if (isCoupleApproved) {
+      discountPercent = 35; // 35% Couple Discount
+    }
+  } else if (isGroupMode) {
+    discountType = "GROUP";
+    discountPercent = 30; // 30% Group Discount
+  }
+
+  const seatsTotal = selected.reduce((sum, s) => sum + getSeatFare(s), 0);
+  const discountAmount = Math.round((seatsTotal * discountPercent) / 100);
+  const discountedSeatsTotal = Math.max(0, seatsTotal - discountAmount);
+  const grandTotal = discountedSeatsTotal + addonsTotal;
+
+  // Handle seat clicks
   const handleSeat = (seat) => {
     if (bookedSeats.includes(seat)) return;
 
     if (selected.includes(seat)) {
-      setSelected(selected.filter((item) => item !== seat));
+      const nextSelected = selected.filter((item) => item !== seat);
+      setSelected(nextSelected);
       const nextGenders = { ...seatGenders };
       delete nextGenders[seat];
       setSeatGenders(nextGenders);
+      return;
+    }
+
+    if (isCoupleMode && selected.length >= 2) {
+      Swal.fire({
+        icon: "info",
+        title: "Couple Booking Limit",
+        text: "Couple Special (35% OFF) is for exactly 2 seats (1 Male + 1 Female).",
+        confirmButtonColor: "#e11d48",
+      });
       return;
     }
 
@@ -249,10 +296,17 @@ export default function BusSeat() {
       return;
     }
 
+    // Default gender: in couple mode, if 1st seat is Male, make 2nd seat Female automatically!
+    let defaultGender = "Male";
+    if (isCoupleMode && selected.length === 1) {
+      const firstSeatGender = seatGenders[selected[0]] || "Male";
+      defaultGender = firstSeatGender === "Male" ? "Female" : "Male";
+    }
+
     setSelected([...selected, seat]);
     setSeatGenders((prev) => ({
       ...prev,
-      [seat]: "Male",
+      [seat]: defaultGender,
     }));
   };
 
@@ -270,6 +324,36 @@ export default function BusSeat() {
     setSeatGenders(nextGenders);
   };
 
+  // Toggle couple mode with romantic theme transition
+  const toggleCoupleMode = () => {
+    if (bookingMode === "couple") {
+      setBookingMode("standard");
+    } else {
+      setBookingMode("couple");
+      // If user currently has more than 2 seats selected, trim to 2
+      if (selected.length > 2) {
+        setSelected(selected.slice(0, 2));
+      }
+      // Notify user of romantic theme and female traveller mandatory rule
+      Swal.fire({
+        icon: "info",
+        title: "💑 Romantic Couple Mode Activated",
+        html: `
+          <div style="font-size: 13px; text-align: left; color: #475569; line-height: 1.6;">
+            <p><b>✨ 35% Couple Privilege Discount</b> has been unlocked!</p>
+            <div style="margin-top: 8px; padding: 10px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; color: #9f1239;">
+              <b>⚠️ Mandatory Verification Rule:</b><br/>
+              Both <b>1 Male (👨)</b> and <b>1 Female (👩)</b> are mandatory.<br/>
+              Physical presence of the female traveller is mandatory at the boarding stand. If no female is present at the stand, the 35% discount is void and full fare must be paid.
+            </div>
+          </div>
+        `,
+        confirmButtonColor: "#e11d48",
+        confirmButtonText: "Got It 💕",
+      });
+    }
+  };
+
   const handleProceed = () => {
     if (selected.length === 0) {
       Swal.fire({
@@ -279,6 +363,36 @@ export default function BusSeat() {
         confirmButtonColor: "#f97316",
       });
       return;
+    }
+
+    // Couple Validation
+    if (isCoupleMode) {
+      if (selected.length !== 2) {
+        Swal.fire({
+          icon: "warning",
+          title: "Couple Booking Requires 2 Seats",
+          text: "Please select exactly 2 seats for Couple booking (35% OFF).",
+          confirmButtonColor: "#e11d48",
+        });
+        return;
+      }
+      if (!hasFemalePassenger) {
+        Swal.fire({
+          icon: "error",
+          title: "Female Passenger Mandatory",
+          html: `
+            <div style="font-size: 13px; color: #475569; text-align: left;">
+              <b>Couple 35% Discount cannot be approved without a female passenger.</b><br/><br/>
+              Please change one passenger's gender to <b>Female (👩)</b> below to claim your 35% couple discount.
+              <br/><br/>
+              <small style="color: #e11d48;">*Rule: No female passenger at the bus stand = Full ticket price payable without discount.</small>
+            </div>
+          `,
+          confirmButtonColor: "#e11d48",
+          confirmButtonText: "Assign Female Passenger",
+        });
+        return;
+      }
     }
 
     const token = localStorage.getItem("usertoken") || localStorage.getItem("token");
@@ -381,6 +495,19 @@ export default function BusSeat() {
           seaterFare: seaterFare,
           sleeperFare: sleeperFare,
           seatsTotal: seatsTotal,
+          // Discount specs
+          bookingMode: bookingMode,
+          discountType: discountType,
+          discount_type: discountType,
+          discountPercent: discountPercent,
+          discount_percent: discountPercent,
+          discountAmount: discountAmount,
+          discount_amount: discountAmount,
+          female_verification_required: isCoupleMode,
+          femaleVerificationRequired: isCoupleMode,
+          stand_verification_note: isCoupleMode
+            ? "Mandatory Female Passenger Stand Verification Required: 1 Female traveller must be present at boarding stand. If no female traveller is present at stand, 35% discount is void and full fare must be paid."
+            : "",
           seatGenders: seatGenders,
           maleCount: maleCount,
           femaleCount: femaleCount,
@@ -402,74 +529,276 @@ export default function BusSeat() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-between font-sans">
+    <div
+      className={`min-h-screen flex flex-col justify-between font-sans transition-colors duration-700 ${
+        isCoupleMode
+          ? "bg-gradient-to-b from-rose-950 via-slate-950 to-pink-950 text-white"
+          : "bg-slate-100 text-slate-900"
+      }`}
+    >
       <div>
         <Header />
 
-        <div className="pt-28 pb-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="pt-28 pb-16 relative overflow-hidden">
+          {/* ROMANTIC THEME FLOATING PARTICLES */}
+          {isCoupleMode && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-10 left-10 text-rose-500/30 text-4xl animate-bounce">
+                ❤️
+              </div>
+              <div className="absolute top-40 right-20 text-pink-400/25 text-3xl animate-pulse">
+                💕
+              </div>
+              <div className="absolute bottom-20 left-1/4 text-rose-400/20 text-5xl">
+                🌹
+              </div>
+              <div className="absolute top-1/2 right-10 text-pink-500/20 text-3xl">
+                💖
+              </div>
+              <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-rose-500/10 rounded-full blur-3xl"></div>
+            </div>
+          )}
+
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
             {/* Header info bar */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm">
+            <div
+              className={`mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl p-5 sm:p-6 border shadow-sm transition-all ${
+                isCoupleMode
+                  ? "bg-slate-900/90 border-rose-500/30 text-white shadow-rose-950/40"
+                  : "bg-white border-slate-200/90 text-slate-900"
+              }`}
+            >
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200">
-                  Step 2 of 3: Seat & Service Selection
-                </span>
-                <h1 className="text-2xl font-black text-slate-900 mt-2 flex items-center gap-2">
-                  <span>Choose Your Seats & Deck Type</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                      isCoupleMode
+                        ? "text-rose-300 bg-rose-950/80 border-rose-500/40"
+                        : "text-orange-600 bg-orange-50 border-orange-200"
+                    }`}
+                  >
+                    Step 2 of 3: Seat & Special Offers
+                  </span>
+
+                  {isCoupleMode && (
+                    <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-xs flex items-center gap-1 animate-pulse">
+                      <Heart size={12} className="fill-white" />
+                      <span>35% Couple Privilege Active</span>
+                    </span>
+                  )}
+
+                  {isGroupMode && !isCoupleMode && (
+                    <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1">
+                      <Users size={12} />
+                      <span>30% Group Saver Active</span>
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="text-2xl font-black mt-2 flex items-center gap-2">
+                  {isCoupleMode ? (
+                    <span className="text-rose-200 flex items-center gap-2">
+                      <span>Romantic Couple Corner & Seating</span>
+                      <span>💕</span>
+                    </span>
+                  ) : (
+                    <span>Choose Your Preferred Seats</span>
+                  )}
                 </h1>
-                <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-                  Lower Deck Seater (Low Rate ₹{seaterFare}) & Upper Deck Sleeper Berth (High Rate ₹{sleeperFare})
+                <p
+                  className={`text-xs sm:text-sm mt-0.5 ${
+                    isCoupleMode ? "text-rose-200/70" : "text-slate-500"
+                  }`}
+                >
+                  Lower Seater (Low Rate ₹{seaterFare}) & Upper Sleeper (High Rate ₹{sleeperFare})
                 </p>
               </div>
 
               {/* Status Legend */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-4 rounded-md border-2 border-slate-300 bg-white"></div>
-                  <span className="text-slate-600">Available</span>
+                  <div
+                    className={`w-4 h-4 rounded-md border-2 ${
+                      isCoupleMode ? "border-rose-400/40 bg-slate-800" : "border-slate-300 bg-white"
+                    }`}
+                  ></div>
+                  <span className={isCoupleMode ? "text-rose-200" : "text-slate-600"}>Available</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-md bg-blue-600 shadow-xs"></div>
-                  <span className="text-blue-700 font-bold">Male (👨)</span>
+                  <span className="text-blue-500 font-bold">Male (👨)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-4 rounded-md bg-rose-500 shadow-xs"></div>
-                  <span className="text-rose-700 font-bold">Female (👩)</span>
+                  <span className="text-rose-400 font-bold">Female (👩)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-4 rounded-md bg-slate-200 text-slate-400"></div>
-                  <span className="text-slate-400">Booked</span>
+                  <div className="w-4 h-4 rounded-md bg-slate-700 text-slate-500"></div>
+                  <span className="text-slate-500">Booked</span>
                 </div>
               </div>
             </div>
 
             {/* TRIP COMPLETED / SEATS RESET NOTICE */}
             {isTripCompleted && (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-4 animate-fade-in shadow-xs">
+              <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-4 animate-fade-in shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                     <ShieldCheck size={20} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold">Bus Journey Completed</h4>
-                    <p className="text-xs text-emerald-600 mt-0.5">
+                    <h4 className="text-sm font-bold text-emerald-400">Bus Journey Completed</h4>
+                    <p className="text-xs opacity-80 mt-0.5">
                       This bus has reached its destination. All coach seats have been freed and are available for new bookings!
                     </p>
                   </div>
                 </div>
-                <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-200/60 text-emerald-900 font-bold text-xs uppercase tracking-wider">
+                <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs uppercase tracking-wider border border-emerald-500/30">
                   Seats Reset
                 </span>
               </div>
             )}
 
-            {/* SEAT TYPE & DECK SELECTION TABS */}
-            <div className="mb-6 bg-white rounded-3xl p-3 border border-slate-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            {/* SPECIAL OFFER & THEME SWITCHER BAR */}
+            <div
+              className={`mb-6 p-4 rounded-3xl border transition-all ${
+                isCoupleMode
+                  ? "bg-gradient-to-r from-rose-950/90 via-pink-950/80 to-slate-900 border-rose-500/40 shadow-lg shadow-rose-950/50"
+                  : "bg-white border-slate-200 shadow-sm"
+              }`}
+            >
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 ${
+                      isCoupleMode
+                        ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/30"
+                        : "bg-orange-100 text-orange-600"
+                    }`}
+                  >
+                    {isCoupleMode ? "💑" : "🎁"}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm sm:text-base flex items-center gap-2">
+                      <span>Travel Offers & Privilege Modes</span>
+                      {isCoupleMode && (
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white">
+                          Romantic Ambience
+                        </span>
+                      )}
+                    </h3>
+                    <p
+                      className={`text-xs mt-0.5 ${
+                        isCoupleMode ? "text-rose-200/80" : "text-slate-500"
+                      }`}
+                    >
+                      Couples get <b>35% OFF</b> with mandatory female passenger • Groups (4+ seats) get <b>30% OFF</b>!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Offer Toggle Buttons */}
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setBookingMode("standard")}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                      bookingMode === "standard"
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : isCoupleMode
+                        ? "bg-slate-800 text-rose-200 hover:bg-slate-700 border border-rose-500/20"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Standard Fare
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleCoupleMode}
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm ${
+                      isCoupleMode
+                        ? "bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-rose-500/40 ring-2 ring-rose-300"
+                        : "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
+                    }`}
+                  >
+                    <Heart size={14} className={isCoupleMode ? "fill-white" : "text-rose-600"} />
+                    <span>💑 Couple Special (35% OFF)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (bookingMode === "group") {
+                        setBookingMode("standard");
+                      } else {
+                        setBookingMode("group");
+                      }
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      isGroupMode && !isCoupleMode
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : isCoupleMode
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                        : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
+                    }`}
+                  >
+                    <Users size={14} />
+                    <span>👥 Group Saver (30% OFF)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* STRICT VERIFICATION NOTICE FOR COUPLE MODE */}
+              {isCoupleMode && (
+                <div className="mt-4 pt-3.5 border-t border-rose-500/20 text-xs text-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-extrabold text-amber-300 block">
+                        Mandatory Stand-side Verification Clause:
+                      </span>
+                      <span>
+                        Couple ticket discount requires 1 Male (👨) + 1 Female (👩). Physical presence of the female traveller is mandatory at the boarding point.{" "}
+                        <strong className="text-white">
+                          If no female traveller is present at the stand, 35% discount is void and full fare must be paid.
+                        </strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-900/60 border border-rose-400/30">
+                    <UserCheck size={14} className="text-rose-300" />
+                    <span className="font-bold text-[11px] text-white">
+                      Female Status:{" "}
+                      {hasFemalePassenger ? (
+                        <span className="text-emerald-400 font-black">Approved (👩 {femaleCount})</span>
+                      ) : (
+                        <span className="text-rose-300 font-black">Pending (Add 1 👩)</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SEAT CATEGORY (DECK) TABS */}
+            <div
+              className={`mb-6 rounded-3xl p-3 border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 ${
+                isCoupleMode
+                  ? "bg-slate-900/90 border-rose-500/30 text-white"
+                  : "bg-white border-slate-200/90 text-slate-900"
+              }`}
+            >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isCoupleMode ? "bg-rose-500/20 text-rose-300" : "bg-orange-500/10 text-orange-600"
+                  }`}
+                >
                   <Layers size={18} />
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                <span className="text-xs font-bold uppercase tracking-wider">
                   Select Seat Category:
                 </span>
               </div>
@@ -480,7 +809,11 @@ export default function BusSeat() {
                   onClick={() => setActiveDeck("all")}
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     activeDeck === "all"
-                      ? "bg-slate-900 text-white shadow-sm"
+                      ? isCoupleMode
+                        ? "bg-rose-600 text-white"
+                        : "bg-slate-900 text-white shadow-sm"
+                      : isCoupleMode
+                      ? "bg-slate-800 text-rose-200 hover:bg-slate-700"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
@@ -493,6 +826,8 @@ export default function BusSeat() {
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     activeDeck === "lower"
                       ? "bg-blue-600 text-white shadow-sm"
+                      : isCoupleMode
+                      ? "bg-blue-950/40 text-blue-300 hover:bg-blue-900/50 border border-blue-400/20"
                       : "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60"
                   }`}
                 >
@@ -506,6 +841,8 @@ export default function BusSeat() {
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     activeDeck === "upper"
                       ? "bg-purple-600 text-white shadow-sm"
+                      : isCoupleMode
+                      ? "bg-purple-950/40 text-purple-300 hover:bg-purple-900/50 border border-purple-400/20"
                       : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60"
                   }`}
                 >
@@ -518,16 +855,20 @@ export default function BusSeat() {
             {/* ROUTE DISTANCE & 450+ KM CATERING CALLOUT */}
             <div
               className={`mb-6 p-4 rounded-2xl border transition-all ${
-                isLongRoute
-                  ? "bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-orange-300 shadow-sm"
-                  : "bg-white border-slate-200 shadow-xs"
+                isCoupleMode
+                  ? "bg-slate-900/80 border-rose-500/30 text-white"
+                  : isLongRoute
+                  ? "bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-orange-300 shadow-sm text-slate-900"
+                  : "bg-white border-slate-200 shadow-xs text-slate-900"
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      isLongRoute
+                      isCoupleMode
+                        ? "bg-rose-600 text-white"
+                        : isLongRoute
                         ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
                         : "bg-slate-100 text-slate-600"
                     }`}
@@ -536,10 +877,16 @@ export default function BusSeat() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">
                         Route Distance:
                       </span>
-                      <span className="text-xs font-black font-mono px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800">
+                      <span
+                        className={`text-xs font-black font-mono px-2 py-0.5 rounded-md border ${
+                          isCoupleMode
+                            ? "bg-slate-800 border-rose-500/30 text-rose-200"
+                            : "bg-white border-slate-200 text-slate-800"
+                        }`}
+                      >
                         {routeDistanceRaw || (distanceKm ? `${distanceKm} km` : "Intercity Express")}
                       </span>
                       {isLongRoute ? (
@@ -547,12 +894,12 @@ export default function BusSeat() {
                           450+ KM Long Journey Active
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-500/20">
                           Direct Route
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className={`text-xs mt-1 ${isCoupleMode ? "text-rose-200/70" : "text-slate-600"}`}>
                       {isLongRoute
                         ? "Special highway meal & refreshment service available for your long route! Add fresh tea, coffee, or dinner plate below."
                         : "Complimentary drinking water provided. Highway dinner plate & beverages available for 450+ km long journeys."}
@@ -574,13 +921,23 @@ export default function BusSeat() {
 
             {/* LIVE PASSENGER COUNTER STRIP */}
             {selected.length > 0 && (
-              <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md flex flex-wrap items-center justify-between gap-4 animate-fade-in border border-slate-800">
+              <div
+                className={`mb-6 p-4 rounded-2xl text-white shadow-md flex flex-wrap items-center justify-between gap-4 animate-fade-in border ${
+                  isCoupleMode
+                    ? "bg-gradient-to-r from-rose-950 via-pink-900 to-rose-950 border-rose-500/50 shadow-rose-950/60"
+                    : "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-slate-800"
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-orange-400 shrink-0">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      isCoupleMode ? "bg-rose-500/30 text-rose-300" : "bg-white/10 text-orange-400"
+                    }`}
+                  >
                     <Users size={20} />
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
+                    <span className="text-xs text-slate-300 font-bold uppercase tracking-wider block">
                       Live Passenger Count
                     </span>
                     <h4 className="text-sm sm:text-base font-extrabold text-white">
@@ -614,42 +971,58 @@ export default function BusSeat() {
               {/* ================= LEFT SIDE: CABIN LAYOUT & CATERING ================= */}
               <div className="lg:col-span-7 space-y-6">
                 {/* 1. CABIN SEAT MATRIX */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200/90 p-6 sm:p-8">
+                <div
+                  className={`rounded-3xl shadow-sm border p-6 sm:p-8 transition-all ${
+                    isCoupleMode
+                      ? "bg-slate-900/90 border-rose-500/30 text-white shadow-rose-950/40"
+                      : "bg-white border-slate-200/90 text-slate-900"
+                  }`}
+                >
                   {/* Cabin Header & Driver */}
-                  <div className="border-b border-slate-100 pb-5 mb-6 flex items-center justify-between">
+                  <div className="border-b border-slate-200/30 pb-5 mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          isCoupleMode ? "bg-rose-950 text-rose-300 border border-rose-500/30" : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
                         <BusFront size={22} />
                       </div>
                       <div>
-                        <h3 className="font-black text-slate-900 text-base">
+                        <h3 className="font-black text-base">
                           {bus?.bus_name || bus?.bus?.bus_name || "Volvo AC Luxury Coach"}
                         </h3>
-                        <p className="text-xs text-slate-400 font-medium">
+                        <p className={`text-xs ${isCoupleMode ? "text-rose-200/70" : "text-slate-400"}`}>
                           Front Cockpit & Driver Cabin
                         </p>
                       </div>
                     </div>
 
                     {/* Steering Wheel / Driver Box */}
-                    <div className="flex items-center gap-2 bg-slate-900 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs border border-white/10">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                       <span>Driver Cabin</span>
                     </div>
                   </div>
 
                   {/* Windshield indicator line */}
-                  <div className="w-full h-1.5 bg-gradient-to-r from-transparent via-slate-300 to-transparent rounded-full mb-6"></div>
+                  <div className="w-full h-1.5 bg-gradient-to-r from-transparent via-slate-300/40 to-transparent rounded-full mb-6"></div>
 
                   {/* SECTION 1: LOWER DECK (SEATER - LOW RATE) */}
                   {(activeDeck === "all" || activeDeck === "lower") && (
                     <div className="mb-8">
-                      <div className="mb-4 flex items-center justify-between px-2 bg-blue-50/70 py-2 rounded-xl border border-blue-100">
-                        <div className="flex items-center gap-2 text-blue-900 font-extrabold text-xs">
-                          <Armchair size={15} className="text-blue-600" />
+                      <div
+                        className={`mb-4 flex items-center justify-between px-3 py-2 rounded-xl border ${
+                          isCoupleMode
+                            ? "bg-blue-950/40 border-blue-400/30 text-blue-200"
+                            : "bg-blue-50/70 border-blue-100 text-blue-900"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 font-extrabold text-xs">
+                          <Armchair size={15} className="text-blue-400" />
                           <span>LOWER DECK • PUSHBACK SEATER</span>
                         </div>
-                        <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-md border border-blue-200">
+                        <span className="text-xs font-black px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-400/30">
                           ₹{seaterFare} (Low Rate)
                         </span>
                       </div>
@@ -680,28 +1053,31 @@ export default function BusSeat() {
                                         relative w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 font-bold text-xs shadow-xs
                                         ${
                                           isBooked
-                                            ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                                            ? "bg-slate-800/40 border border-slate-700 text-slate-500 cursor-not-allowed"
                                             : isSelected
-                                            ? gender === "Female"
+                                            ? isCoupleMode
+                                              ? "bg-gradient-to-br from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/40 scale-105 ring-2 ring-rose-300"
+                                              : gender === "Female"
                                               ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/30 scale-105 ring-2 ring-rose-300"
                                               : "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30 scale-105 ring-2 ring-blue-300"
+                                            : isCoupleMode
+                                            ? "bg-slate-800/80 border-2 border-rose-500/30 hover:border-rose-400 text-rose-100 active:scale-95"
                                             : "bg-white border-2 border-slate-200 hover:border-blue-400 hover:text-blue-600 text-slate-700 active:scale-95"
                                         }
                                       `}
                                     >
                                       {isBooked ? (
-                                        <Lock size={14} className="text-slate-400" />
+                                        <Lock size={14} className="text-slate-500" />
                                       ) : isSelected ? (
                                         <span className="text-[12px] leading-none mb-0.5">
-                                          {gender === "Female" ? "👩" : "👨"}
+                                          {isCoupleMode ? "💑" : gender === "Female" ? "👩" : "👨"}
                                         </span>
                                       ) : (
                                         <Armchair size={15} />
                                       )}
                                       <span className="text-[11px] mt-0.5">{seat}</span>
 
-                                      {/* Seat Type Mini Tag */}
-                                      <span className="text-[8px] text-slate-400 block scale-90 -mt-0.5">
+                                      <span className="text-[8px] opacity-75 block scale-90 -mt-0.5">
                                         ₹{seaterFare}
                                       </span>
 
@@ -722,7 +1098,13 @@ export default function BusSeat() {
                               </div>
 
                               {/* Gangway */}
-                              <div className="w-8 sm:w-10 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest shrink-0 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <div
+                                className={`w-8 sm:w-10 text-center text-[10px] font-bold uppercase tracking-widest shrink-0 py-2 rounded-lg border ${
+                                  isCoupleMode
+                                    ? "bg-slate-800/80 border-slate-700 text-rose-300/50"
+                                    : "bg-slate-50 border-slate-100 text-slate-300"
+                                }`}
+                              >
                                 {row + 1}
                               </div>
 
@@ -743,27 +1125,31 @@ export default function BusSeat() {
                                         relative w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 font-bold text-xs shadow-xs
                                         ${
                                           isBooked
-                                            ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                                            ? "bg-slate-800/40 border border-slate-700 text-slate-500 cursor-not-allowed"
                                             : isSelected
-                                            ? gender === "Female"
+                                            ? isCoupleMode
+                                              ? "bg-gradient-to-br from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/40 scale-105 ring-2 ring-rose-300"
+                                              : gender === "Female"
                                               ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/30 scale-105 ring-2 ring-rose-300"
                                               : "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30 scale-105 ring-2 ring-blue-300"
+                                            : isCoupleMode
+                                            ? "bg-slate-800/80 border-2 border-rose-500/30 hover:border-rose-400 text-rose-100 active:scale-95"
                                             : "bg-white border-2 border-slate-200 hover:border-blue-400 hover:text-blue-600 text-slate-700 active:scale-95"
                                         }
                                       `}
                                     >
                                       {isBooked ? (
-                                        <Lock size={14} className="text-slate-400" />
+                                        <Lock size={14} className="text-slate-500" />
                                       ) : isSelected ? (
                                         <span className="text-[12px] leading-none mb-0.5">
-                                          {gender === "Female" ? "👩" : "👨"}
+                                          {isCoupleMode ? "💑" : gender === "Female" ? "👩" : "👨"}
                                         </span>
                                       ) : (
                                         <Armchair size={15} />
                                       )}
                                       <span className="text-[11px] mt-0.5">{seat}</span>
 
-                                      <span className="text-[8px] text-slate-400 block scale-90 -mt-0.5">
+                                      <span className="text-[8px] opacity-75 block scale-90 -mt-0.5">
                                         ₹{seaterFare}
                                       </span>
 
@@ -792,12 +1178,24 @@ export default function BusSeat() {
                   {/* SECTION 2: UPPER DECK (SLEEPER - HIGH RATE) */}
                   {(activeDeck === "all" || activeDeck === "upper") && (
                     <div>
-                      <div className="mb-4 flex items-center justify-between px-2 bg-purple-50/70 py-2 rounded-xl border border-purple-100">
-                        <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs">
-                          <BedDouble size={15} className="text-purple-600" />
+                      <div
+                        className={`mb-4 flex items-center justify-between px-3 py-2 rounded-xl border ${
+                          isCoupleMode
+                            ? "bg-rose-950/60 border-rose-500/40 text-rose-200"
+                            : "bg-purple-50/70 border-purple-100 text-purple-900"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 font-extrabold text-xs">
+                          <BedDouble size={15} className={isCoupleMode ? "text-rose-400" : "text-purple-600"} />
                           <span>UPPER DECK • LUXURY SLEEPER BERTHS</span>
                         </div>
-                        <span className="text-xs font-black text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200">
+                        <span
+                          className={`text-xs font-black px-2 py-0.5 rounded-md border ${
+                            isCoupleMode
+                              ? "bg-rose-500/20 text-rose-300 border-rose-400/30"
+                              : "bg-purple-500/20 text-purple-700 border-purple-200"
+                          }`}
+                        >
                           ₹{sleeperFare} (High Rate)
                         </span>
                       </div>
@@ -828,27 +1226,35 @@ export default function BusSeat() {
                                         relative w-12 sm:w-16 h-12 sm:h-14 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 font-bold text-xs shadow-xs
                                         ${
                                           isBooked
-                                            ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                                            ? "bg-slate-800/40 border border-slate-700 text-slate-500 cursor-not-allowed"
                                             : isSelected
-                                            ? gender === "Female"
+                                            ? isCoupleMode
+                                              ? "bg-gradient-to-br from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/40 scale-105 ring-2 ring-rose-300"
+                                              : gender === "Female"
                                               ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/30 scale-105 ring-2 ring-rose-300"
                                               : "bg-gradient-to-br from-purple-600 to-indigo-700 text-white shadow-md shadow-purple-500/30 scale-105 ring-2 ring-purple-300"
+                                            : isCoupleMode
+                                            ? "bg-slate-800/80 border-2 border-rose-500/40 hover:border-rose-400 text-rose-100 active:scale-95"
                                             : "bg-white border-2 border-purple-200/80 hover:border-purple-500 hover:text-purple-700 text-slate-800 active:scale-95"
                                         }
                                       `}
                                     >
                                       {isBooked ? (
-                                        <Lock size={14} className="text-slate-400" />
+                                        <Lock size={14} className="text-slate-500" />
                                       ) : isSelected ? (
                                         <span className="text-[12px] leading-none mb-0.5">
-                                          {gender === "Female" ? "👩" : "👨"}
+                                          {isCoupleMode ? "💑" : gender === "Female" ? "👩" : "👨"}
                                         </span>
                                       ) : (
-                                        <BedDouble size={16} className="text-purple-600" />
+                                        <BedDouble size={16} className={isCoupleMode ? "text-rose-400" : "text-purple-600"} />
                                       )}
                                       <span className="text-[11px] mt-0.5 font-black">{seat}</span>
 
-                                      <span className="text-[8px] text-purple-600 font-semibold block scale-90 -mt-0.5">
+                                      <span
+                                        className={`text-[8px] font-semibold block scale-90 -mt-0.5 ${
+                                          isCoupleMode ? "text-rose-300" : "text-purple-600"
+                                        }`}
+                                      >
                                         ₹{sleeperFare}
                                       </span>
 
@@ -857,7 +1263,7 @@ export default function BusSeat() {
                                           className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black ${
                                             gender === "Female"
                                               ? "bg-rose-200 text-rose-800"
-                                              : "bg-purple-200 text-purple-900"
+                                              : "bg-blue-200 text-blue-900"
                                           }`}
                                         >
                                           {gender === "Female" ? "F" : "M"}
@@ -869,7 +1275,13 @@ export default function BusSeat() {
                               </div>
 
                               {/* Gangway */}
-                              <div className="w-8 sm:w-10 text-center text-[10px] font-bold text-purple-400 uppercase tracking-widest shrink-0 py-2 bg-purple-50 rounded-lg border border-purple-100">
+                              <div
+                                className={`w-8 sm:w-10 text-center text-[10px] font-bold uppercase tracking-widest shrink-0 py-2 rounded-lg border ${
+                                  isCoupleMode
+                                    ? "bg-slate-800/80 border-slate-700 text-rose-400/50"
+                                    : "bg-purple-50 border-purple-100 text-purple-400"
+                                }`}
+                              >
                                 {row + 1}
                               </div>
 
@@ -890,27 +1302,35 @@ export default function BusSeat() {
                                         relative w-12 sm:w-16 h-12 sm:h-14 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 font-bold text-xs shadow-xs
                                         ${
                                           isBooked
-                                            ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                                            ? "bg-slate-800/40 border border-slate-700 text-slate-500 cursor-not-allowed"
                                             : isSelected
-                                            ? gender === "Female"
+                                            ? isCoupleMode
+                                              ? "bg-gradient-to-br from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/40 scale-105 ring-2 ring-rose-300"
+                                              : gender === "Female"
                                               ? "bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/30 scale-105 ring-2 ring-rose-300"
                                               : "bg-gradient-to-br from-purple-600 to-indigo-700 text-white shadow-md shadow-purple-500/30 scale-105 ring-2 ring-purple-300"
+                                            : isCoupleMode
+                                            ? "bg-slate-800/80 border-2 border-rose-500/40 hover:border-rose-400 text-rose-100 active:scale-95"
                                             : "bg-white border-2 border-purple-200/80 hover:border-purple-500 hover:text-purple-700 text-slate-800 active:scale-95"
                                         }
                                       `}
                                     >
                                       {isBooked ? (
-                                        <Lock size={14} className="text-slate-400" />
+                                        <Lock size={14} className="text-slate-500" />
                                       ) : isSelected ? (
                                         <span className="text-[12px] leading-none mb-0.5">
-                                          {gender === "Female" ? "👩" : "👨"}
+                                          {isCoupleMode ? "💑" : gender === "Female" ? "👩" : "👨"}
                                         </span>
                                       ) : (
-                                        <BedDouble size={16} className="text-purple-600" />
+                                        <BedDouble size={16} className={isCoupleMode ? "text-rose-400" : "text-purple-600"} />
                                       )}
                                       <span className="text-[11px] mt-0.5 font-black">{seat}</span>
 
-                                      <span className="text-[8px] text-purple-600 font-semibold block scale-90 -mt-0.5">
+                                      <span
+                                        className={`text-[8px] font-semibold block scale-90 -mt-0.5 ${
+                                          isCoupleMode ? "text-rose-300" : "text-purple-600"
+                                        }`}
+                                      >
                                         ₹{sleeperFare}
                                       </span>
 
@@ -937,29 +1357,51 @@ export default function BusSeat() {
                   )}
 
                   {/* Rear Indicator */}
-                  <div className="mt-8 pt-4 border-t border-slate-100 text-center text-xs text-slate-400 font-medium">
+                  <div
+                    className={`mt-8 pt-4 border-t text-center text-xs font-medium ${
+                      isCoupleMode ? "border-slate-800 text-rose-300/40" : "border-slate-100 text-slate-400"
+                    }`}
+                  >
                     Rear of the Coach
                   </div>
                 </div>
 
                 {/* 2. HIGHWAY CATERING & REFRESHMENTS SECTION (450+ KM ADDONS) */}
                 {enableAddons && (
-                  <div className="bg-white rounded-3xl shadow-sm border border-orange-200/80 p-6 sm:p-7 relative overflow-hidden animate-fade-in">
-                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                  <div
+                    className={`rounded-3xl shadow-sm border p-6 sm:p-7 relative overflow-hidden animate-fade-in ${
+                      isCoupleMode
+                        ? "bg-slate-900/90 border-rose-500/30 text-white"
+                        : "bg-white border-orange-200/80 text-slate-900"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-200/30 mb-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20">
+                        <div
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                            isCoupleMode
+                              ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                              : "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+                          }`}
+                        >
                           <Coffee size={20} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-black text-slate-900 text-base">
+                            <h3 className="font-black text-base">
                               Highway Catering & Travel Add-ons
                             </h3>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                isCoupleMode
+                                  ? "bg-rose-950 text-rose-300 border border-rose-500/40"
+                                  : "bg-orange-100 text-orange-700 border border-orange-200"
+                              }`}
+                            >
                               450+ KM Route Special
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className={`text-xs mt-0.5 ${isCoupleMode ? "text-rose-200/70" : "text-slate-500"}`}>
                             Delivered fresh & steaming hot to your seat at certified highway food plazas
                           </p>
                         </div>
@@ -980,7 +1422,11 @@ export default function BusSeat() {
                             key={item.id}
                             className={`p-3.5 rounded-2xl border transition-all ${
                               count > 0
-                                ? "bg-orange-50/60 border-orange-300 ring-1 ring-orange-300"
+                                ? isCoupleMode
+                                  ? "bg-rose-950/60 border-rose-500/60 ring-1 ring-rose-400"
+                                  : "bg-orange-50/60 border-orange-300 ring-1 ring-orange-300"
+                                : isCoupleMode
+                                ? "bg-slate-800/60 border-slate-700/80 hover:bg-slate-800"
                                 : "bg-slate-50/80 border-slate-200/80 hover:bg-slate-50"
                             }`}
                           >
@@ -989,7 +1435,7 @@ export default function BusSeat() {
                                 <span className="text-2xl mt-0.5">{item.icon}</span>
                                 <div>
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+                                    <h4 className="text-xs sm:text-sm font-bold leading-tight">
                                       {item.name}
                                     </h4>
                                     <span
@@ -1002,38 +1448,48 @@ export default function BusSeat() {
                                       {item.tag}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                                  <p
+                                    className={`text-[11px] mt-0.5 line-clamp-2 ${
+                                      isCoupleMode ? "text-rose-200/70" : "text-slate-500"
+                                    }`}
+                                  >
                                     {item.desc}
                                   </p>
-                                  <span className="text-xs font-black text-slate-900 block mt-1.5">
+                                  <span className="text-xs font-black block mt-1.5">
                                     ₹{item.price}
                                   </span>
                                 </div>
                               </div>
 
                               {/* Quantity Controls */}
-                              <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs shrink-0 self-center">
+                              <div
+                                className={`flex items-center gap-1.5 p-1 rounded-xl border shadow-2xs shrink-0 self-center ${
+                                  isCoupleMode
+                                    ? "bg-slate-900 border-slate-700"
+                                    : "bg-white border-slate-200"
+                                }`}
+                              >
                                 <button
                                   type="button"
                                   onClick={() => updateAddon(item.id, -1)}
                                   disabled={count === 0}
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition ${
                                     count === 0
-                                      ? "text-slate-300 cursor-not-allowed"
-                                      : "bg-slate-100 hover:bg-orange-500 hover:text-white text-slate-700"
+                                      ? "opacity-30 cursor-not-allowed"
+                                      : "hover:bg-rose-500 hover:text-white"
                                   }`}
                                 >
                                   <Minus size={12} />
                                 </button>
 
-                                <span className="w-5 text-center font-bold text-xs font-mono text-slate-800">
+                                <span className="w-5 text-center font-bold text-xs font-mono">
                                   {count}
                                 </span>
 
                                 <button
                                   type="button"
                                   onClick={() => updateAddon(item.id, 1)}
-                                  className="w-7 h-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs transition"
+                                  className="w-7 h-7 rounded-lg bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs font-bold shadow-2xs transition"
                                 >
                                   <Plus size={12} />
                                 </button>
@@ -1049,38 +1505,58 @@ export default function BusSeat() {
 
               {/* ================= RIGHT SIDE: STICKY JOURNEY SUMMARY ================= */}
               <div className="lg:col-span-5 sticky top-28 space-y-6">
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200/90 p-6 sm:p-7">
-                  <h3 className="text-xl font-black text-slate-900 mb-5">
-                    Journey Summary
-                  </h3>
+                <div
+                  className={`rounded-3xl shadow-sm border p-6 sm:p-7 transition-all ${
+                    isCoupleMode
+                      ? "bg-slate-900/90 border-rose-500/30 text-white shadow-rose-950/40"
+                      : "bg-white border-slate-200/90 text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-200/30 mb-5">
+                    <h3 className="text-xl font-black flex items-center gap-2">
+                      <span>Journey Summary</span>
+                      {isCoupleMode && <span>💕</span>}
+                    </h3>
+                    {discountPercent > 0 && (
+                      <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                        {discountPercent}% Discount Applied
+                      </span>
+                    )}
+                  </div>
 
                   {/* Trip Details Card */}
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 mb-6">
+                  <div
+                    className={`rounded-2xl p-4 border space-y-3 mb-6 ${
+                      isCoupleMode
+                        ? "bg-slate-800/80 border-slate-700 text-rose-100"
+                        : "bg-slate-50 border-slate-100 text-slate-900"
+                    }`}
+                  >
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Route:</span>
-                      <span className="font-bold text-slate-900 capitalize">
+                      <span className="opacity-70 font-medium">Route:</span>
+                      <span className="font-bold capitalize">
                         {bus?.source_city || bus?.route?.source_city || "Jaipur"} → {bus?.destination_city || bus?.route?.distance_city || "Delhi"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Distance:</span>
-                      <span className="font-bold text-slate-900">
+                      <span className="opacity-70 font-medium">Distance:</span>
+                      <span className="font-bold">
                         {routeDistanceRaw || (distanceKm ? `${distanceKm} km` : "280 km Direct")}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Departure:</span>
-                      <span className="font-bold text-slate-900">
+                      <span className="opacity-70 font-medium">Departure:</span>
+                      <span className="font-bold">
                         {bus?.departure_time || "09:00 PM"}
                       </span>
                     </div>
 
                     {bus?.trip_date && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500 font-medium">Travel Date:</span>
-                        <span className="font-bold text-slate-900">
+                        <span className="opacity-70 font-medium">Travel Date:</span>
+                        <span className="font-bold">
                           {new Date(bus.trip_date).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "short",
@@ -1093,7 +1569,7 @@ export default function BusSeat() {
 
                   {/* Selected Seats Badges */}
                   <div className="mb-6">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-70 block mb-2">
                       Selected Seats ({selected.length})
                     </span>
                     {selected.length > 0 ? (
@@ -1105,12 +1581,14 @@ export default function BusSeat() {
                             <span
                               key={seat}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs border ${
-                                isSleeper
+                                isCoupleMode
+                                  ? "bg-rose-950/80 border-rose-500/50 text-rose-200"
+                                  : isSleeper
                                   ? "bg-purple-50 border-purple-200 text-purple-800"
                                   : "bg-blue-50 border-blue-200 text-blue-800"
                               }`}
                             >
-                              <span>{isSleeper ? "🛏️" : "💺"}</span>
+                              <span>{isCoupleMode ? "💑" : isSleeper ? "🛏️" : "💺"}</span>
                               <span>
                                 {seat} ({isSleeper ? "Sleeper" : "Seater"} • ₹{getSeatFare(seat)}) {gender === "Female" ? "👩" : "👨"}
                               </span>
@@ -1127,7 +1605,13 @@ export default function BusSeat() {
                         })}
                       </div>
                     ) : (
-                      <div className="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-400 text-center font-medium">
+                      <div
+                        className={`p-3 rounded-xl border border-dashed text-xs text-center font-medium ${
+                          isCoupleMode
+                            ? "bg-slate-800/40 border-slate-700 text-slate-500"
+                            : "bg-slate-50 border-slate-200 text-slate-400"
+                        }`}
+                      >
                         Click on available seats on the layout to select
                       </div>
                     )}
@@ -1135,15 +1619,25 @@ export default function BusSeat() {
 
                   {/* Passenger Gender Details */}
                   {selected.length > 0 && (
-                    <div className="mb-6 border-t border-slate-100 pt-5">
+                    <div className="mb-6 border-t border-slate-200/30 pt-5">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-900 block">
+                        <span className="text-xs font-bold uppercase tracking-wider block">
                           Passenger Gender Assignment
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-[11px] opacity-75">
                           {maleCount} Male, {femaleCount} Female
                         </span>
                       </div>
+
+                      {/* Validation Warning Callout for Couple Mode */}
+                      {isCoupleMode && !hasFemalePassenger && (
+                        <div className="mb-3 p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs flex items-center gap-2">
+                          <AlertTriangle size={15} className="text-amber-400 shrink-0" />
+                          <span>
+                            <strong>Female Passenger Required:</strong> Set at least 1 passenger to Female (👩) to approve 35% discount.
+                          </span>
+                        </div>
+                      )}
 
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                         {selected.map((seat) => {
@@ -1152,34 +1646,46 @@ export default function BusSeat() {
                           return (
                             <div
                               key={seat}
-                              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80"
+                              className={`flex items-center justify-between p-2.5 rounded-xl border ${
+                                isCoupleMode
+                                  ? "bg-slate-800/80 border-slate-700"
+                                  : "bg-slate-50 border-slate-200/80"
+                              }`}
                             >
                               <div className="flex items-center gap-2">
                                 <div
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
-                                    isSleeper ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                    isCoupleMode
+                                      ? "bg-rose-900 text-rose-200"
+                                      : isSleeper
+                                      ? "bg-purple-100 text-purple-700"
+                                      : "bg-blue-100 text-blue-700"
                                   }`}
                                 >
                                   {seat}
                                 </div>
                                 <div className="text-left">
-                                  <span className="text-xs font-bold text-slate-800 block">
+                                  <span className="text-xs font-bold block">
                                     Seat {seat}
                                   </span>
-                                  <span className="text-[10px] text-slate-400">
+                                  <span className="text-[10px] opacity-70">
                                     {isSleeper ? "Sleeper Berth" : "Seater Chair"} • ₹{getSeatFare(seat)}
                                   </span>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+                              <div
+                                className={`flex items-center gap-1 p-1 rounded-xl border shadow-2xs ${
+                                  isCoupleMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                                }`}
+                              >
                                 <button
                                   type="button"
                                   onClick={() => setGenderForSeat(seat, "Male")}
                                   className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                                     currentGender === "Male"
                                       ? "bg-blue-600 text-white"
-                                      : "text-slate-500 hover:text-slate-800"
+                                      : "opacity-60 hover:opacity-100"
                                   }`}
                                 >
                                   <span>👨 M</span>
@@ -1190,7 +1696,7 @@ export default function BusSeat() {
                                   className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                                     currentGender === "Female"
                                       ? "bg-rose-500 text-white"
-                                      : "text-slate-500 hover:text-slate-800"
+                                      : "opacity-60 hover:opacity-100"
                                   }`}
                                 >
                                   <span>👩 F</span>
@@ -1204,53 +1710,83 @@ export default function BusSeat() {
                   )}
 
                   {/* Price Calculation Breakdown */}
-                  <div className="border-t border-slate-100 pt-4 space-y-2.5 text-sm">
+                  <div className="border-t border-slate-200/30 pt-4 space-y-2.5 text-sm">
                     {seaterSelected.length > 0 && (
-                      <div className="flex justify-between text-slate-600">
-                        <span>Lower Seater ({seaterSelected.length} × ₹{seaterFare})</span>
-                        <span className="font-semibold text-slate-900">
+                      <div className="flex justify-between">
+                        <span className="opacity-80">Lower Seater ({seaterSelected.length} × ₹{seaterFare})</span>
+                        <span className="font-semibold">
                           ₹{seaterSelected.length * seaterFare}
                         </span>
                       </div>
                     )}
 
                     {sleeperSelected.length > 0 && (
-                      <div className="flex justify-between text-slate-600">
-                        <span>Upper Sleeper ({sleeperSelected.length} × ₹{sleeperFare})</span>
-                        <span className="font-semibold text-slate-900">
+                      <div className="flex justify-between">
+                        <span className="opacity-80">Upper Sleeper ({sleeperSelected.length} × ₹{sleeperFare})</span>
+                        <span className="font-semibold">
                           ₹{sleeperSelected.length * sleeperFare}
                         </span>
                       </div>
                     )}
 
+                    {/* DISCOUNT ROW */}
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-400 font-bold bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+                        <span className="flex items-center gap-1">
+                          <Sparkles size={14} />
+                          <span>
+                            {isCoupleMode ? "Couple Privilege (35% OFF)" : "Group Saver Discount (30% OFF)"}
+                          </span>
+                        </span>
+                        <span>-₹{discountAmount}</span>
+                      </div>
+                    )}
+
+                    {/* Pending Verification Notice */}
+                    {isCoupleMode && !isCoupleApproved && (
+                      <div className="text-[11px] text-amber-400 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                        *35% Couple Discount unlocked when 1 Female passenger is assigned.
+                      </div>
+                    )}
+
                     {addonsTotal > 0 && (
-                      <div className="flex justify-between text-orange-600 font-medium">
+                      <div className="flex justify-between text-orange-400 font-medium">
                         <span>Highway Catering ({addonsCount} items)</span>
-                        <span className="font-bold text-orange-600">
+                        <span className="font-bold">
                           +₹{addonsTotal}
                         </span>
                       </div>
                     )}
 
-                    <div className="flex justify-between text-slate-600">
+                    <div className="flex justify-between opacity-80">
                       <span>GST & Highway Taxes</span>
-                      <span className="font-semibold text-emerald-600">
+                      <span className="font-semibold text-emerald-400">
                         ₹0 (Waived)
                       </span>
                     </div>
 
-                    <div className="border-t border-slate-100 pt-3 flex items-baseline justify-between">
+                    <div className="border-t border-slate-200/30 pt-3 flex items-baseline justify-between">
                       <div>
-                        <span className="text-xs uppercase font-bold text-slate-400 block">
-                          Total Amount
+                        <span className="text-xs uppercase font-bold opacity-70 block">
+                          Total Amount Payable
                         </span>
-                        <span className="text-2xl font-black text-slate-900">
+                        <span
+                          className={`text-2xl font-black ${
+                            isCoupleMode ? "text-rose-400" : "text-orange-500"
+                          }`}
+                        >
                           ₹{grandTotal}
                         </span>
                       </div>
-                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                        Best Fare Guaranteed
-                      </span>
+                      {discountAmount > 0 ? (
+                        <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                          Saved ₹{discountAmount}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                          Best Fare Guaranteed
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1260,10 +1796,12 @@ export default function BusSeat() {
                     onClick={handleProceed}
                     disabled={selected.length === 0}
                     className={`
-                      w-full mt-6 py-4 rounded-2xl font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-98
+                      w-full mt-6 py-4 rounded-2xl font-black text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-98
                       ${
                         selected.length === 0
-                          ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                          ? "bg-slate-700 text-slate-400 cursor-not-allowed shadow-none"
+                          : isCoupleMode
+                          ? "bg-gradient-to-r from-rose-600 via-pink-600 to-rose-600 hover:from-rose-500 hover:to-pink-500 text-white shadow-rose-600/30"
                           : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/25"
                       }
                     `}
@@ -1272,14 +1810,20 @@ export default function BusSeat() {
                     <span>
                       {selected.length === 0
                         ? "Select Seats to Proceed"
+                        : isCoupleMode
+                        ? `Proceed with Couple Privilege ₹${grandTotal}`
                         : `Proceed to Pay ₹${grandTotal} (${maleCount}M, ${femaleCount}F)`}
                     </span>
                   </button>
 
                   {/* Safe checkout notice */}
-                  <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
-                    <ShieldCheck size={15} className="text-emerald-500" />
-                    <span>256-Bit SSL Encrypted & 100% Safe Checkout</span>
+                  <div
+                    className={`mt-4 flex items-center justify-center gap-2 text-xs font-medium ${
+                      isCoupleMode ? "text-rose-200/60" : "text-slate-400"
+                    }`}
+                  >
+                    <ShieldCheck size={15} className="text-emerald-400" />
+                    <span>256-Bit SSL Encrypted & Official Saweriya Reservation</span>
                   </div>
                 </div>
               </div>

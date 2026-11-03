@@ -16,6 +16,7 @@ import {
   CreditCard,
   QrCode,
   Utensils,
+  Heart,
 } from "lucide-react";
 
 export default function Ticket() {
@@ -251,13 +252,24 @@ export default function Ticket() {
                   <Bus size={26} className="text-orange-400" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] font-bold tracking-widest uppercase text-orange-400">
                       Saweriya Travellers Boarding Pass
                     </span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                       Verified
                     </span>
+                    {(booking.discountType === "COUPLE" || booking.discount_type === "COUPLE") && (
+                      <span className="text-[10px] bg-rose-500 text-white font-extrabold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                        <Heart size={10} className="fill-white" />
+                        <span>35% Couple Privilege</span>
+                      </span>
+                    )}
+                    {(booking.discountType === "GROUP" || booking.discount_type === "GROUP") && (
+                      <span className="text-[10px] bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-full shadow-xs">
+                        30% Group Saver
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
                     {busName}
@@ -443,6 +455,27 @@ export default function Ticket() {
                 <p className="text-[10px] text-slate-500 mt-2 font-medium">
                   Show this digital voucher to the bus food coordinator during the highway stop.
                 </p>
+              </div>
+            )}
+
+            {/* MANDATORY STAND-SIDE FEMALE VERIFICATION CARD */}
+            {(booking.female_verification_required || booking.femaleVerificationRequired || booking.discountType === "COUPLE" || booking.discount_type === "COUPLE") && (
+              <div className="mt-5 p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                <div className="flex items-center gap-2 mb-1.5 text-rose-800">
+                  <span className="text-base">⚠️</span>
+                  <span className="text-xs font-black uppercase tracking-wider">
+                    Mandatory Female Passenger Stand-Side Verification Clause
+                  </span>
+                </div>
+                <p className="text-xs text-rose-700 leading-relaxed">
+                  As per Saweriya Travellers Couple Policy, 1 female traveller must be physically present at boarding. <b>If no female traveller is present at the stand, the 35% discount is void and full fare difference must be paid to the station supervisor.</b>
+                </p>
+                <div className="mt-2.5 flex items-center gap-2 text-[11px] font-bold text-rose-800 bg-white/80 p-2 rounded-xl border border-rose-200/80 w-fit">
+                  <span>Registered Passengers:</span>
+                  <span className="text-emerald-700 font-extrabold">
+                    👨 {booking.maleCount || 1} Male • 👩 {booking.femaleCount || 1} Female (Couple Verified)
+                  </span>
+                </div>
               </div>
             )}
 

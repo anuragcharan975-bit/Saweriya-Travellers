@@ -65,6 +65,34 @@ const bookingSchema = new mongoose.Schema(
         },
 
         // ==========================================
+        // DISCOUNTS & PROMOTIONAL OFFERS
+        // ==========================================
+        discount_type: {
+            type: String,
+            default: "NONE" // "COUPLE", "GROUP", "NONE"
+        },
+
+        discount_amount: {
+            type: Number,
+            default: 0
+        },
+
+        discount_percent: {
+            type: Number,
+            default: 0
+        },
+
+        female_verification_required: {
+            type: Boolean,
+            default: false
+        },
+
+        stand_verification_note: {
+            type: String,
+            default: ""
+        },
+
+        // ==========================================
         // TOTAL AMOUNT
         // ==========================================
         total_amount: {

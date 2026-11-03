@@ -441,6 +441,16 @@ export default function MyBookings() {
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-slate-300 border border-white/10">
                             {regNo}
                           </span>
+                          {(b.discount_type === "COUPLE" || b.discountType === "COUPLE") && (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              💑 Couple (35% OFF)
+                            </span>
+                          )}
+                          {(b.discount_type === "GROUP" || b.discountType === "GROUP") && (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              👥 Group (30% OFF)
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-slate-300 mt-0.5 flex items-center gap-1.5">
                           <span>{bType}</span>

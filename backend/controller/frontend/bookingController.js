@@ -78,6 +78,12 @@ const createBooking = async (req, res) => {
         const addons_amount = Number(req.body.addons_amount ?? req.body.addonsAmount ?? 0);
         let distance = req.body.distance || "";
 
+        const discount_type = req.body.discount_type || req.body.discountType || "NONE";
+        const discount_amount = Number(req.body.discount_amount ?? req.body.discountAmount ?? 0);
+        const discount_percent = Number(req.body.discount_percent ?? req.body.discountPercent ?? 0);
+        const female_verification_required = Boolean(req.body.female_verification_required ?? req.body.femaleVerificationRequired ?? false);
+        const stand_verification_note = req.body.stand_verification_note || req.body.standVerificationNote || "";
+
         // 3. Seats check
         if (!rawSeats || (Array.isArray(rawSeats) && rawSeats.length === 0)) {
             return res.status(400).json({
@@ -235,6 +241,11 @@ const createBooking = async (req, res) => {
             addons: addons,
             addons_amount: addons_amount,
             distance: distance,
+            discount_type: discount_type,
+            discount_amount: discount_amount,
+            discount_percent: discount_percent,
+            female_verification_required: female_verification_required,
+            stand_verification_note: stand_verification_note,
             total_amount: parsedAmount,
             booking_status: "Booked",
             bus_name: bus_name,
