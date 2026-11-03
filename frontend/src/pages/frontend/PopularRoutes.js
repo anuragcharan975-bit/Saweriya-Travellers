@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ViewPopularRoutes } from "../../Service/admin/Route";
+import { getRouteImage } from "../../utils/routeImages";
 import {
   Clock,
   Navigation,
@@ -11,40 +12,31 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-// Curated high-resolution verified destination images
-const DESTINATION_IMAGES = {
-  delhi: "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
-  jaipur: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
-  mumbai: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
-  goa: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
-  pune: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
-  surat: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=800&q=80",
-  ahmedabad: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=800&q=80",
-  bangalore: "https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?auto=format&fit=crop&w=800&q=80",
-  udaipur: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
-};
+const getDestinationImage = getRouteImage;
 
-const getDestinationImage = (city) => {
-  if (!city) return DESTINATION_IMAGES.delhi;
-  const key = String(city).trim().toLowerCase();
-  for (const [k, url] of Object.entries(DESTINATION_IMAGES)) {
-    if (key.includes(k) || k.includes(key)) return url;
-  }
-  return "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80";
-};
-
-// The 5 canonical popular routes with verified DB fallback values
+// The canonical popular routes with verified DB fallback values
 const DEFAULT_POPULAR_ROUTES = [
+  {
+    _id: "6ae1d5966c3983675d02ac46",
+    route_name: "Jaipur - Saweriya Seth Royal Sleeper",
+    source_city: "Jaipur",
+    distance_city: "Saweriya Seth",
+    distance: "390 km",
+    duration: "7 hrs 30 min",
+    fare: 600,
+    badge: "Flagship Divine Express",
+    image: getRouteImage("saweriya"),
+  },
   {
     _id: "6a86d0e1799407248ea06fc9",
     route_name: "Jaipur - Delhi Superfast Express",
     source_city: "Jaipur",
     distance_city: "Delhi",
     distance: "280 km",
-    duration: "5h 30m",
+    duration: "5 hrs 00 min",
     fare: 450,
     badge: "Most Booked",
-    image: DESTINATION_IMAGES.delhi,
+    image: getRouteImage("delhi"),
   },
   {
     _id: "6ae86e457b369fafc905aaeb",
@@ -52,10 +44,10 @@ const DEFAULT_POPULAR_ROUTES = [
     source_city: "Delhi",
     distance_city: "Jaipur",
     distance: "280 km",
-    duration: "5h 15m",
+    duration: "5 hrs 00 min",
     fare: 480,
     badge: "Express Service",
-    image: DESTINATION_IMAGES.jaipur,
+    image: getRouteImage("jaipur"),
   },
   {
     _id: "6ae86e457b369fafc905aaed",
@@ -63,10 +55,10 @@ const DEFAULT_POPULAR_ROUTES = [
     source_city: "Mumbai",
     distance_city: "Pune",
     distance: "150 km",
-    duration: "3h 00m",
+    duration: "3 hrs 00 min",
     fare: 350,
     badge: "Deccan Cruiser",
-    image: DESTINATION_IMAGES.pune,
+    image: getRouteImage("pune"),
   },
   {
     _id: "6ae86e457b369fafc905aaef",
@@ -74,10 +66,10 @@ const DEFAULT_POPULAR_ROUTES = [
     source_city: "Bangalore",
     distance_city: "Goa",
     distance: "560 km",
-    duration: "11h 30m",
+    duration: "11 hrs 30 min",
     fare: 950,
     badge: "Luxury Sleeper",
-    image: DESTINATION_IMAGES.goa,
+    image: getRouteImage("goa"),
   },
   {
     _id: "6ae86e467b369fafc905aaf1",
@@ -85,10 +77,10 @@ const DEFAULT_POPULAR_ROUTES = [
     source_city: "Ahmedabad",
     distance_city: "Surat",
     distance: "265 km",
-    duration: "4h 45m",
+    duration: "4 hrs 30 min",
     fare: 420,
     badge: "Fastest Trip",
-    image: DESTINATION_IMAGES.surat,
+    image: getRouteImage("surat"),
   },
 ];
 
@@ -103,6 +95,7 @@ export default function PopularRoutes() {
 
         if (data.length > 0) {
           const priorityKeys = [
+            "jaipur-saweriya seth",
             "jaipur-delhi",
             "delhi-jaipur",
             "mumbai-pune",
@@ -111,6 +104,7 @@ export default function PopularRoutes() {
           ];
 
           const badgeMap = {
+            "jaipur-saweriya seth": "Flagship Divine Express",
             "jaipur-delhi": "Most Booked",
             "delhi-jaipur": "Express Service",
             "mumbai-pune": "Deccan Cruiser",
@@ -126,13 +120,13 @@ export default function PopularRoutes() {
             const found = data.find(
               (r) =>
                 (r.source_city || "").trim().toLowerCase() === src &&
-                (r.distance_city || "").trim().toLowerCase() === dst
+                (r.distance_city || "").trim().toLowerCase().includes(dst)
             );
             if (found) {
               matched.push({
                 ...found,
                 badge: badgeMap[key] || "Verified Route",
-                image: getDestinationImage(found.distance_city),
+                image: getRouteImage(found),
               });
             } else {
               const fb = DEFAULT_POPULAR_ROUTES.find(

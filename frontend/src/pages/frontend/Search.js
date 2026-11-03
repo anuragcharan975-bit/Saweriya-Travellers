@@ -6,6 +6,7 @@ import Footer from "./Footer";
 
 import { SearchSchedule } from "../../Service/admin/Schedule";
 import { ViewAllRoute } from "../../Service/admin/Route";
+import { getRouteImage } from "../../utils/routeImages";
 
 export default function Search() {
 
@@ -645,182 +646,100 @@ export default function Search() {
                               routeId ||
                               index
                             }
-                            className="w-full bg-white rounded-2xl shadow-md hover:shadow-xl transition p-7"
+                            className="group w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 p-5 sm:p-6 border border-slate-200/80 hover:border-orange-200"
                           >
-
-
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
-
-
-                              {/* ==================================
-                                  FROM
-                              ================================== */}
-
-                              <div>
-
-                                <p className="text-gray-400 text-sm">
-
-                                  From
-
-                                </p>
-
-
-                                <h3 className="text-2xl font-bold capitalize">
-
-                                  {route?.source_city ||
-                                    "Source"}
-
-                                </h3>
-
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
+                              {/* Destination Photo Thumbnail */}
+                              <div className="relative w-full sm:w-36 h-36 sm:h-28 rounded-2xl overflow-hidden shrink-0 shadow-sm">
+                                <img
+                                  src={getRouteImage(route)}
+                                  alt={route?.distance_city || "Destination"}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent sm:hidden" />
+                                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs sm:hidden">
+                                  {route?.distance_city}
+                                </span>
                               </div>
 
-
-                              {/* ==================================
-                                  ROUTE
-                              ================================== */}
-
-                              <div className="text-center">
-
-                                <p className="text-gray-500">
-
-                                  {route?.duration ||
-                                    "Journey"}
-
-                                </p>
-
-
-                                <div className="relative my-3">
-
-                                  <div className="border-t-2 border-dashed border-orange-400"></div>
-
-
-                                  <span className="absolute right-0 -top-3 text-2xl text-orange-500">
-
-                                    ➜
-
-                                  </span>
-
+                              {/* Route Info */}
+                              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                                {/* From */}
+                                <div>
+                                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                                    From
+                                  </p>
+                                  <h3 className="text-xl sm:text-2xl font-black capitalize text-slate-900">
+                                    {route?.source_city || "Source"}
+                                  </h3>
                                 </div>
 
+                                {/* Flow / Duration */}
+                                <div className="text-center">
+                                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full inline-block">
+                                    {route?.duration || "Express"}
+                                  </span>
+                                  <div className="relative my-2">
+                                    <div className="border-t-2 border-dashed border-orange-400"></div>
+                                    <span className="absolute right-0 -top-3 text-lg text-orange-500">
+                                      ➜
+                                    </span>
+                                  </div>
+                                  <p className="text-emerald-600 font-bold text-xs">
+                                    {route?.distance || ""}
+                                  </p>
+                                </div>
 
-                                <p className="text-green-600 font-medium">
+                                {/* To */}
+                                <div>
+                                  <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                                    To
+                                  </p>
+                                  <h3 className="text-xl sm:text-2xl font-black capitalize text-slate-900">
+                                    {route?.distance_city || "Destination"}
+                                  </h3>
+                                </div>
 
-                                  {route?.distance ||
-                                    ""}
-
-                                </p>
-
+                                {/* Fare */}
+                                <div className="flex flex-col sm:items-end justify-center">
+                                  <p className="text-gray-400 text-xs font-medium">
+                                    Starting From
+                                  </p>
+                                  <h2 className="text-2xl sm:text-3xl font-black text-orange-500">
+                                    ₹{route?.fare || 500}
+                                  </h2>
+                                </div>
                               </div>
 
-
-                              {/* ==================================
-                                  TO
-                              ================================== */}
-
-                              <div>
-
-                                <p className="text-gray-400 text-sm">
-
-                                  To
-
-                                </p>
-
-
-                                <h3 className="text-2xl font-bold capitalize">
-
-                                  {route?.distance_city ||
-                                    "Destination"}
-
-                                </h3>
-
-                              </div>
-
-
-                              {/* ==================================
-                                  FARE
-                              ================================== */}
-
-                              <div className="text-center">
-
-                                <p className="text-gray-500">
-
-                                  Starting From
-
-                                </p>
-
-
-                                <h2 className="text-3xl font-bold text-orange-500">
-
-                                  ₹
-                                  {route?.fare ||
-                                    500}
-
-                                </h2>
-
-                              </div>
-
-
-                              {/* ==================================
-                                  VIEW BUSES
-                              ================================== */}
-
-                              <div>
-
+                              {/* Action Button */}
+                              <div className="shrink-0 flex items-center justify-end">
                                 {routeId ? (
-
                                   <button
                                     onClick={() => {
-
-                                      console.log(
-                                        "VIEW BUS ROUTE ID:",
-                                        routeId
-                                      );
-
-
-                                      navigate(
-                                        `/view-buses/${routeId}`,
-                                        {
-                                          state: {
-
-                                            route:
-                                              route,
-
-                                            searchData:
-                                              item,
-
-                                            searchDate:
-                                              date,
-
-                                          },
-
-                                        }
-                                      );
-
+                                      console.log("VIEW BUS ROUTE ID:", routeId);
+                                      navigate(`/view-buses/${routeId}`, {
+                                        state: {
+                                          route: route,
+                                          searchData: item,
+                                          searchDate: date,
+                                        },
+                                      });
                                     }}
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white px-5 py-4 rounded-xl font-semibold"
+                                    className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3.5 rounded-2xl font-bold transition shadow-md shadow-orange-500/20 active:scale-95"
                                   >
-
                                     View Buses
-
                                   </button>
-
                                 ) : (
-
                                   <button
                                     disabled
-                                    className="w-full bg-gray-400 text-white px-5 py-4 rounded-xl font-semibold"
+                                    className="w-full sm:w-auto bg-gray-300 text-gray-500 px-6 py-3.5 rounded-2xl font-bold cursor-not-allowed"
                                   >
-
-                                    Route ID Missing
-
+                                    Unavailable
                                   </button>
-
                                 )}
-
                               </div>
-
                             </div>
-
                           </div>
 
                         );
