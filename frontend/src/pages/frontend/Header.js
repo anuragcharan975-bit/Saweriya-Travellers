@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import BusLogo from "../../assets/logo.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Image_url } from "../../Config/config";
 import {
   User,
   LogOut,
@@ -173,9 +174,9 @@ export default function Header() {
                     <img
                       src={
                         user?.profile_image
-                          ? `http://localhost:4000/uploads/${user.profile_image}`
+                          ? `${Image_url}/${user.profile_image}`
                           : user?.image
-                          ? `http://localhost:4000/uploads/${user.image}`
+                          ? `${Image_url}/${user.image}`
                           : `https://ui-avatars.com/api/?name=${encodeURIComponent(
                               userName
                             )}&background=ff6b00&color=fff&bold=true`

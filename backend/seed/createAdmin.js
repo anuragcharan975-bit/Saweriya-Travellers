@@ -1,13 +1,13 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const Admin = require("../model/admin"); 
+const Admin = require("../model/admin");
 
-mongoose.connect("mongodb://127.0.0.1:27017/anurag_travels");
+const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/anurag_travels";
+mongoose.connect(mongoUri);
 
 async function createAdmin() {
-
   try {
-
     const admin = await Admin.findOne({ role_id: 1 });
 
     if (admin) {
@@ -15,10 +15,12 @@ async function createAdmin() {
       process.exit();
     }
 
-    const hashedPassword = await bcrypt.hash("Admin@123", 10);
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@gmail.com";
+    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@123";
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
     await Admin.create({
-      email: "admin@gmail.com",
+      email: adminEmail,
       password: hashedPassword,
       role_id: 1,
       status: true,
@@ -27,8 +29,8 @@ async function createAdmin() {
     console.log("Admin Created Successfully");
     process.exit();
   } catch (err) {
-    console.log(err);
-    process.exit();
+    console.log("Admin creation error:", err);
+    process.exit(1);
   }
 }
 

@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "saweriya_jwt_default_secret_key";
+
 const optionalToken = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -17,7 +19,7 @@ const optionalToken = (req, res, next) => {
             return next();
         }
 
-        const decoded = jwt.verify(token, "mysecretkey");
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {

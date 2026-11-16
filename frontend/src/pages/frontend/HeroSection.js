@@ -15,6 +15,7 @@ import {
 import { SearchSchedule } from "../../Service/admin/Schedule";
 import { ViewRouteDropdown } from "../../Service/admin/Route";
 import { ViewAllBus } from "../../Service/admin/Bus";
+import { Image_url } from "../../Config/config";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const HeroSection = () => {
           .map((bus) => ({
             id: bus._id,
             title: bus.bus_name || "Bus",
-            url: `http://localhost:4000/uploads/${bus.bus_image}`,
+            url: `${Image_url}/${bus.bus_image}`,
           }));
 
         if (images.length > 0) {
